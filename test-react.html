@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test React</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>🧪 Test React Rendering</h1>
+    <div id="test-root"></div>
+    
+    <script>
+        console.log('🔍 Testing browser environment...')
+        
+        // Test 1: Check if page loads
+        console.log('✅ HTML loaded')
+        
+        // Test 2: Check if we can access localhost:5173
+        fetch('http://localhost:5173/')
+            .then(response => {
+                console.log('✅ Vite server responds:', response.status)
+                return response.text()
+            })
+            .then(html => {
+                console.log('✅ HTML length:', html.length)
+                
+                // Test 3: Check if HTML contains React elements
+                if (html.includes('<div id="root">')) {
+                    console.log('✅ Root element found in HTML')
+                } else {
+                    console.log('❌ No root element in HTML')
+                }
+                
+                if (html.includes('main.tsx')) {
+                    console.log('✅ main.tsx script found')
+                } else {
+                    console.log('❌ No main.tsx script')
+                }
+                
+                // Test 4: Try to load the page in an iframe
+                const iframe = document.createElement('iframe')
+                iframe.src = 'http://localhost:5173/'
+                iframe.style.width = '100%'
+                iframe.style.height = '400px'
+                iframe.style.border = '1px solid #ccc'
+                
+                iframe.onload = () => {
+                    console.log('✅ Application loaded in iframe')
+                    
+                    setTimeout(() => {
+                        try {
+                            const doc = iframe.contentDocument || iframe.contentWindow.document
+                            const root = doc.getElementById('root')
+                            if (root && root.children.length > 0) {
+                                console.log('✅ React app rendered - found', root.children.length, 'child elements')
+                            } else {
+                                console.log('❌ React app not rendered - root is empty')
+                            }
+                        } catch (e) {
+                            console.log('⚠️ Cannot access iframe content (CORS):', e.message)
+                        }
+                    }, 2000)
+                }
+                
+                iframe.onerror = () => {
+                    console.log('❌ Failed to load application in iframe')
+                }
+                
+                document.getElementById('test-root').appendChild(iframe)
+            })
+            .catch(error => {
+                console.log('❌ Cannot fetch from Vite server:', error)
+            })
+    </script>
+</body>
+</html>

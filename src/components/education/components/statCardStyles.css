@@ -1,0 +1,65 @@
+/* Unikalne style dla StatCard - stworzone od podstaw */
+
+.stat-card {
+  position: relative;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.stat-card-shine {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-card:hover .stat-card-shine {
+  opacity: 1;
+  animation: statCardShine 2s ease-in-out infinite;
+}
+
+@keyframes statCardShine {
+  0%, 100% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Pulse effect for icon */
+.stat-card:hover .education-icon-wrapper {
+  animation: statCardIconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes statCardIconPulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(56, 182, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(56, 182, 255, 0.6);
+  }
+}
+

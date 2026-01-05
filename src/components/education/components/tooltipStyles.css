@@ -1,0 +1,118 @@
+.tooltip {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+.tooltip-content {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  max-width: 300px;
+  word-wrap: break-word;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.tooltip-light {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95));
+  color: #1f2937;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+.tooltip-dark {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(17, 24, 39, 0.95));
+  color: #f3f4f6;
+  border: 1px solid rgba(55, 65, 81, 0.8);
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.tooltip-arrow-top {
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+}
+
+.tooltip-light .tooltip-arrow-top {
+  border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
+}
+
+.tooltip-dark .tooltip-arrow-top {
+  border-color: rgba(31, 41, 55, 0.95) transparent transparent transparent;
+}
+
+.tooltip-arrow-bottom {
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 6px 6px;
+}
+
+.tooltip-light .tooltip-arrow-bottom {
+  border-color: transparent transparent rgba(255, 255, 255, 0.95) transparent;
+}
+
+.tooltip-dark .tooltip-arrow-bottom {
+  border-color: transparent transparent rgba(31, 41, 55, 0.95) transparent;
+}
+
+.tooltip-arrow-left {
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+}
+
+.tooltip-light .tooltip-arrow-left {
+  border-color: transparent transparent transparent rgba(255, 255, 255, 0.95);
+}
+
+.tooltip-dark .tooltip-arrow-left {
+  border-color: transparent transparent transparent rgba(31, 41, 55, 0.95);
+}
+
+.tooltip-arrow-right {
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 6px 6px 0;
+}
+
+.tooltip-light .tooltip-arrow-right {
+  border-color: transparent rgba(255, 255, 255, 0.95) transparent transparent;
+}
+
+.tooltip-dark .tooltip-arrow-right {
+  border-color: transparent rgba(31, 41, 55, 0.95) transparent transparent;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .tooltip-content {
+    max-width: 250px;
+    font-size: 0.8125rem;
+    padding: 0.625rem 0.875rem;
+  }
+}
+

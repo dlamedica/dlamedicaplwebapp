@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Categories Alignment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <h1 class="text-2xl font-bold text-center mb-8">Category Alignment Test</h1>
+    
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-xl font-semibold mb-4">BEFORE (Left Aligned):</h2>
+        <div class="flex flex-wrap gap-2 md:gap-4 mb-12 bg-white p-4 rounded">
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-[#7ec8ff] text-black">Najnowsze</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Technologie</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Zdrowie publiczne</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Badania</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Prawo medyczne</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Leczenie i diagnostyka</button>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4">AFTER (Centered):</h2>
+        <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-12 bg-white p-4 rounded">
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-[#7ec8ff] text-black">Najnowsze</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Technologie</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Zdrowie publiczne</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Badania</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Prawo medyczne</button>
+            <button class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-black">Leczenie i diagnostyka</button>
+        </div>
+    </div>
+</body>
+</html>

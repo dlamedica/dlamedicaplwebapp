@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "title": "Nowe metody leczenia cukrzycy typu 2",
+    "excerpt": "Przegląd najnowszych terapii i leków w leczeniu cukrzycy typu 2, które mogą znacząco poprawić jakość życia pacjentów.",
+    "category": "Farmakologia",
+    "date": "2024-01-15",
+    "author": "Dr Anna Kowalska",
+    "readTime": "5 min",
+    "image": "/api/placeholder/400/200"
+  },
+  {
+    "id": 3,
+    "title": "Profilaktyka chorób sercowo-naczyniowych",
+    "excerpt": "Kompleksowy przewodnik po profilaktyce chorób serca, z uwzględnieniem najnowszych wytycznych kardiologicznych.",
+    "category": "Zdrowie publiczne",
+    "date": "2024-01-10",
+    "author": "Dr Katarzyna Wiśniewska",
+    "readTime": "6 min",
+    "image": "/api/placeholder/400/200"
+  },
+  {
+    "id": 4,
+    "title": "Badania nad szczepionkami mRNA",
+    "excerpt": "Najnowsze odkrycia w dziedzinie szczepionek mRNA i ich potencjalne zastosowania w medycynie.",
+    "category": "Badania",
+    "date": "2024-01-08",
+    "author": "Dr Tomasz Zieliński",
+    "readTime": "8 min",
+    "image": "/api/placeholder/400/200"
+  },
+  {
+    "id": 5,
+    "title": "Immunoterapia w leczeniu nowotworów",
+    "excerpt": "Przełomowe metody immunoterapii w onkologii i ich wpływ na wyniki leczenia pacjentów z nowotworami.",
+    "category": "Farmakologia",
+    "date": "2024-01-05",
+    "author": "Prof. Ewa Jankowska",
+    "readTime": "9 min",
+    "image": "/api/placeholder/400/200"
+  },
+  {
+    "id": 6,
+    "title": "Telemedicyna w dobie pandemii",
+    "excerpt": "Rozwój telemedicyny i jej rola w opiece zdrowotnej podczas pandemii COVID-19 i w przyszłości.",
+    "category": "Technologie",
+    "date": "2024-01-03",
+    "author": "Dr Piotr Kowalczyk",
+    "readTime": "4 min",
+    "image": "/api/placeholder/400/200"
+  },
+  {
+    "id": 7,
+    "title": "Zdrowie psychiczne w społeczeństwie",
+    "excerpt": "Analiza problemów zdrowia psychicznego w społeczeństwie i strategie interwencji zdrowia publicznego.",
+    "category": "Zdrowie publiczne",
+    "date": "2024-01-01",
+    "author": "Dr Agnieszka Majewska",
+    "readTime": "6 min",
+    "image": "/api/placeholder/400/200"
+  },
+  {
+    "id": 8,
+    "title": "Genowe terapie przyszłości",
+    "excerpt": "Perspektywy rozwoju terapii genowej i jej potencjalne zastosowania w leczeniu chorób genetycznych.",
+    "category": "Badania",
+    "date": "2023-12-28",
+    "author": "Prof. Marek Kowalski",
+    "readTime": "7 min",
+    "image": "/api/placeholder/400/200"
+  }
+]

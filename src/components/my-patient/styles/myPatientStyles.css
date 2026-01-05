@@ -1,0 +1,730 @@
+/* ============================================
+   Unikalne style dla modułu "Mój pacjent"
+   Symulator przypadków klinicznych
+   ============================================ */
+
+/* Animacje */
+@keyframes patientPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(56, 182, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(56, 182, 255, 0);
+  }
+}
+
+@keyframes alertBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes statusGlow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  56% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ecgLine {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes tabUnderline {
+  from {
+    width: 0;
+    left: 50%;
+  }
+  to {
+    width: 100%;
+    left: 0;
+  }
+}
+
+/* Dashboard */
+.my-patient-dashboard {
+  min-height: 100vh;
+  transition: background-color 0.3s;
+}
+
+.my-patient-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.my-patient-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(56, 182, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Lista pacjentów */
+.patient-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.patient-card {
+  position: relative;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.5s ease forwards;
+  overflow: hidden;
+}
+
+.patient-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.patient-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  transition: width 0.3s;
+}
+
+.patient-card:hover::before {
+  width: 6px;
+}
+
+.patient-card.status-stable::before {
+  background: linear-gradient(180deg, #10b981, #059669);
+}
+
+.patient-card.status-urgent::before {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+
+.patient-card.status-critical::before {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  animation: alertBlink 1s infinite;
+}
+
+.patient-card.status-improving::before {
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+}
+
+.patient-card.status-worsening::before {
+  background: linear-gradient(180deg, #f87171, #ef4444);
+  animation: alertBlink 2s infinite;
+}
+
+/* Avatar pacjenta */
+.patient-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.patient-card:hover .patient-avatar {
+  transform: scale(1.1);
+}
+
+.patient-avatar-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  animation: patientPulse 2s infinite;
+}
+
+.patient-avatar-ring.status-urgent {
+  border-color: #f59e0b;
+}
+
+.patient-avatar-ring.status-critical {
+  border-color: #ef4444;
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-badge.stable {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.urgent {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  animation: statusGlow 2s infinite;
+}
+
+.status-badge.critical {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: alertBlink 1s infinite;
+}
+
+.status-badge.improving {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-badge.worsening {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(239, 68, 68, 0.1));
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+/* Alert cards */
+.alert-card {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border-left: 4px solid;
+  animation: slideInRight 0.3s ease;
+}
+
+.alert-card.info {
+  border-left-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
+}
+
+.alert-card.warning {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent);
+}
+
+.alert-card.danger {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), transparent);
+}
+
+.alert-card.success {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), transparent);
+}
+
+/* Karty zakładek */
+.patient-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.patient-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.patient-tab:hover {
+  transform: translateY(-2px);
+}
+
+.patient-tab.active {
+  font-weight: 600;
+}
+
+.patient-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #38b6ff, #2a9fe5);
+  border-radius: 3px;
+  animation: tabUnderline 0.3s ease forwards;
+}
+
+.patient-tab-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  background: #ef4444;
+  color: white;
+  animation: patientPulse 2s infinite;
+}
+
+/* Sekcje karty pacjenta */
+.patient-section {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideInUp 0.4s ease;
+}
+
+.patient-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid;
+}
+
+.patient-section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #38b6ff20, #38b6ff10);
+}
+
+/* Parametry życiowe */
+.vital-signs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.vital-sign-card {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+.vital-sign-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.vital-sign-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--vital-color, #38b6ff), transparent);
+}
+
+.vital-sign-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vital-color, #38b6ff)20, var(--vital-color, #38b6ff)10);
+}
+
+.vital-sign-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.vital-sign-value.abnormal {
+  color: #ef4444;
+  animation: heartbeat 1.5s infinite;
+}
+
+.vital-sign-label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}
+
+.vital-sign-unit {
+  font-size: 0.875rem;
+  opacity: 0.6;
+}
+
+/* Formularze */
+.interview-question {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s;
+}
+
+.interview-question:hover {
+  transform: translateX(4px);
+}
+
+.interview-question-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Badania */
+.lab-test-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.lab-test-card:hover {
+  transform: translateX(4px);
+}
+
+.lab-test-card.selected {
+  border: 2px solid #38b6ff;
+  box-shadow: 0 0 20px rgba(56, 182, 255, 0.2);
+}
+
+.lab-test-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lab-test-cost {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lab-test-cost-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, #38b6ff, #38b6ff50, transparent);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.5rem;
+  animation: slideInRight 0.4s ease;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.35rem;
+  top: 0.25rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #38b6ff;
+  border: 2px solid white;
+  box-shadow: 0 0 0 4px rgba(56, 182, 255, 0.2);
+}
+
+.timeline-item.warning::before {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.timeline-item.danger::before {
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  animation: patientPulse 2s infinite;
+}
+
+.timeline-item.success::before {
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.timeline-content {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+/* Punktacja */
+.score-display {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-display::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(56, 182, 255, 0.1) 0%, transparent 70%);
+  animation: patientPulse 3s infinite;
+}
+
+.score-value {
+  font-size: 4rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #38b6ff, #2a9fe5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.score-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.score-category {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  text-align: center;
+}
+
+.score-category-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.score-category-label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}
+
+/* Progress bar */
+.xp-progress {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #38b6ff, #2a9fe5);
+  animation: progressFill 1s ease;
+  position: relative;
+}
+
+.xp-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* Difficulty badges */
+.difficulty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.difficulty-badge.level-1 {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.difficulty-badge.level-2 {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.difficulty-badge.level-3 {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Quick actions */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.quick-action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.quick-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .patient-tabs {
+    flex-wrap: nowrap;
+  }
+  
+  .vital-signs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .score-breakdown {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Shimmer dla skeleton */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ECG animation */
+.ecg-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: ecgLine 2s linear infinite;
+}
+
+/* Glass effect */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+

@@ -1,0 +1,163 @@
+/* Unikalne style dla LoadingSpinner - stworzone od podstaw */
+
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  position: relative;
+  display: inline-block;
+}
+
+/* Size classes */
+.spinner-sm {
+  width: 24px;
+  height: 24px;
+}
+
+.spinner-md {
+  width: 48px;
+  height: 48px;
+}
+
+.spinner-lg {
+  width: 64px;
+  height: 64px;
+}
+
+.spinner-xl {
+  width: 96px;
+  height: 96px;
+}
+
+/* Ring base styles */
+.spinner-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+
+.spinner-ring-outer {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  animation: spinnerRotate 1.2s linear infinite;
+}
+
+.spinner-ring-middle {
+  width: 70%;
+  height: 70%;
+  top: 15%;
+  left: 15%;
+  animation: spinnerRotate 0.9s linear infinite reverse;
+}
+
+.spinner-ring-inner {
+  width: 40%;
+  height: 40%;
+  top: 30%;
+  left: 30%;
+  animation: spinnerRotate 0.6s linear infinite;
+}
+
+.spinner-ring-fill {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-width: 3px;
+  border-top-style: solid;
+  top: -3px;
+  left: -3px;
+  animation: spinnerRotate 1s linear infinite;
+}
+
+.spinner-ring-reverse {
+  animation: spinnerRotate 0.8s linear infinite reverse;
+}
+
+/* Center dot */
+.spinner-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20%;
+  height: 20%;
+  border-radius: 50%;
+  animation: spinnerPulse 1.5s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes spinnerRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinnerPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+/* Size-specific adjustments */
+.spinner-sm .spinner-center-dot {
+  width: 4px;
+  height: 4px;
+}
+
+.spinner-md .spinner-center-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.spinner-lg .spinner-center-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.spinner-xl .spinner-center-dot {
+  width: 12px;
+  height: 12px;
+}
+
+/* Text styles */
+.spinner-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  animation: spinnerTextFade 2s ease-in-out infinite;
+}
+
+@keyframes spinnerTextFade {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Glow effect for primary variant */
+.loading-spinner[class*="spinner-md"],
+.loading-spinner[class*="spinner-lg"],
+.loading-spinner[class*="spinner-xl"] {
+  filter: drop-shadow(0 0 8px rgba(56, 182, 255, 0.3));
+}
+

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage Fixes Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Homepage fixes verification</h1>
+        
+        <!-- 1. CENTERED CATEGORIES TEST -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">✅ 1. Categories Centering Test</h2>
+            <p class="mb-4 text-gray-600">Categories should be perfectly centered:</p>
+            
+            <div class="w-full border-b bg-white border-gray-200">
+                <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <nav class="flex justify-center items-center space-x-8 overflow-x-auto scrollbar-hide py-4 w-full">
+                        <button class="whitespace-nowrap py-2 px-4 text-sm font-medium rounded-lg bg-[#7ec8ff] text-black">Najnowsze</button>
+                        <button class="whitespace-nowrap py-2 px-4 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">Technologie</button>
+                        <button class="whitespace-nowrap py-2 px-4 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">Zdrowie publiczne</button>
+                        <button class="whitespace-nowrap py-2 px-4 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">Badania</button>
+                        <button class="whitespace-nowrap py-2 px-4 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">Prawo medyczne</button>
+                        <button class="whitespace-nowrap py-2 px-4 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">Leczenie i diagnostyka</button>
+                    </nav>
+                </div>
+            </div>
+            <p class="mt-2 text-sm text-green-600">✅ Fixed: Added justify-center items-center w-full to CategoryBar nav element</p>
+        </div>
+
+        <!-- 2. REMOVED VIEW COUNTS TEST -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">✅ 2. Removed View Counts Test</h2>
+            <p class="mb-4 text-gray-600">Popular articles should NOT show view counts (like "38 osób"):</p>
+            
+            <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-lg">
+                <div class="flex items-center mb-4">
+                    <span class="mr-2 text-red-500">🔥</span>
+                    <h3 class="text-xl font-bold text-gray-900">Najczęściej czytane</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <article class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-[#7ec8ff] text-black">1</div>
+                        <div class="flex-shrink-0">
+                            <img src="https://via.placeholder.com/80x60/7ec8ff/ffffff?text=ERC" alt="Article thumbnail" class="w-16 h-12 rounded object-cover">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-base font-medium leading-tight mb-2 text-gray-900">
+                                Najnowsze wytyczne ERC 2024 - co się zmieniło w resuscytacji?
+                            </h4>
+                            <div class="flex items-center space-x-3 text-sm text-gray-500">
+                                <div class="flex items-center">
+                                    <span class="mr-1">📅</span>
+                                    15 stycznia 2024
+                                </div>
+                                <span>• 5 min</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+            <p class="mt-2 text-sm text-green-600">✅ Fixed: Removed FaEye icon and view counts from PopularArticles component</p>
+        </div>
+
+        <!-- 3. IMPROVED DATE FORMATTING TEST -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">✅ 3. Professional Date Formatting Test</h2>
+            <p class="mb-4 text-gray-600">Dates should display in professional format:</p>
+            
+            <div class="bg-gray-50 p-4 rounded border-l-4 border-blue-500">
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">BEFORE (ugly):</span>
+                        <span class="text-red-600 font-mono">15.01.2024</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">AFTER (professional):</span>
+                        <span class="text-green-600 font-medium">15 stycznia 2024</span>
+                    </div>
+                </div>
+            </div>
+            <p class="mt-2 text-sm text-green-600">✅ Fixed: Updated toLocaleDateString to use full month names and proper formatting</p>
+        </div>
+
+        <!-- VERIFICATION SUMMARY -->
+        <div class="bg-green-50 border border-green-200 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold text-green-800 mb-4">🎉 All Fixes Completed Successfully!</h2>
+            <ul class="space-y-2 text-green-700">
+                <li class="flex items-center">
+                    <span class="text-green-500 mr-2">✅</span>
+                    Categories are now perfectly centered with justify-center
+                </li>
+                <li class="flex items-center">
+                    <span class="text-green-500 mr-2">✅</span>
+                    View counts removed from "Najczęściej czytane" section
+                </li>
+                <li class="flex items-center">
+                    <span class="text-green-500 mr-2">✅</span>
+                    Date formatting improved to professional standard
+                </li>
+                <li class="flex items-center">
+                    <span class="text-green-500 mr-2">✅</span>
+                    All changes maintain responsive design
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

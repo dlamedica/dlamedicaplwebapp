@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// === UŻYTKOWNICY ===
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  profession String? // lekarz, pielęgniarka, fizjoterapeuta, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacje
+  flashcardSets FlashcardSet[]
+  notes         Note[]
+  noteFolders   NoteFolder[]
+  studyPlans    StudyPlan[]
+  studyProgress StudyProgress[]
+  studySessions StudySession[]
+
+  @@map("users")
+}
+
+// === FISZKI ===
+model FlashcardSet {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  category    String?
+  subcategory String?
+  difficulty  String?  // Łatwy, Średni, Trudny
+  language    String   @default("Polski")
+  tags        String[]
+  visibility  String   @default("private") // private, public
+  cardCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacje
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards Flashcard[]
+
+  @@map("flashcard_sets")
+}
+
+model Flashcard {
+  id           String  @id @default(cuid())
+  setId        String
+  frontText    String
+  frontImage   String?
+  frontAudio   String?
+  backText     String
+  backImage    String?
+  backAudio    String?
+  hint         String?
+  explanation  String?
+  difficulty   Int     @default(3) // 1-5
+  position     Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacje
+  set           FlashcardSet    @relation(fields: [setId], references: [id], onDelete: Cascade)
+  studyProgress StudyProgress[]
+
+  @@map("flashcards")
+}
+
+model StudyProgress {
+  id           String    @id @default(cuid())
+  userId       String
+  cardId       String
+  masteryLevel Int       @default(0) // 0-7 (SRS levels)
+  easeFactor   Float     @default(2.5)
+  intervalDays Int       @default(1)
+  nextReview   DateTime  @default(now())
+  reviewCount  Int       @default(0)
+  correctCount Int       @default(0)
+  lastReviewed DateTime?
+
+  // Relacje
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+  @@map("study_progress")
+}
+
+model StudySession {
+  id               String    @id @default(cuid())
+  userId           String
+  setId            String
+  mode             String    // classic, learn, write, test, match, gravity
+  cardsStudied     Int       @default(0)
+  correctAnswers   Int       @default(0)
+  incorrectAnswers Int       @default(0)
+  timeSpent        Int       @default(0) // w sekundach
+  completed        Boolean   @default(false)
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+
+  // Relacje
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_sessions")
+}
+
+// === NOTATKI ===
+model Note {
+  id          String   @id @default(cuid())
+  userId      String
+  folderId    String?
+  title       String
+  content     Json     @default("[]") // Notion-style blocks
+  contentText String?  // Plain text dla wyszukiwania
+  tags        String[]
+  isFavorite  Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  visibility  String   @default("private")
+  wordCount   Int      @default(0)
+  readingTime Int      @default(0) // w minutach
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacje
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder NoteFolder? @relation(fields: [folderId], references: [id])
+
+  @@map("notes")
+}
+
+model NoteFolder {
+  id       String @id @default(cuid())
+  userId   String
+  name     String
+  parentId String?
+  color    String @default("#3B82F6")
+  icon     String @default("📁")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacje
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent NoteFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children NoteFolder[] @relation("FolderHierarchy")
+  notes  Note[]
+
+  @@map("note_folders")
+}
+
+// === PLANY NAUKI ===
+model StudyPlan {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  category    String?
+  difficulty  Int      @default(3) // 1-5
+  duration    Int?     // w tygodniach
+  status      String   @default("active") // active, completed, paused
+  progress    Float    @default(0) // 0-100%
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacje
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_plans")
+}

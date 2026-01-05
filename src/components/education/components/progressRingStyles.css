@@ -1,0 +1,108 @@
+/* Unikalne style dla ProgressRing - stworzone od podstaw */
+
+.progress-ring-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-ring {
+  position: relative;
+  z-index: 1;
+}
+
+.progress-ring-animated .progress-ring-fill {
+  animation: progressRingPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressRingPulse {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.9;
+    filter: brightness(1.1);
+  }
+}
+
+.progress-ring-bg {
+  transition: stroke 0.3s;
+}
+
+.progress-ring-fill {
+  transition: stroke-dashoffset 1s ease-out, stroke 0.3s;
+}
+
+.progress-ring-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.progress-ring-text {
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: currentColor;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.progress-ring-percent {
+  font-size: 0.625rem;
+  opacity: 0.7;
+}
+
+.progress-ring-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: progressRingGlow 2s ease-in-out infinite;
+}
+
+@keyframes progressRingGlow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Hover effect */
+.progress-ring-container:hover .progress-ring-fill {
+  stroke-width: calc(var(--stroke-width, 6px) + 1px);
+  filter: brightness(1.2);
+}
+
+.progress-ring-container:hover .progress-ring-glow {
+  animation: progressRingGlowHover 1s ease-in-out infinite;
+}
+
+@keyframes progressRingGlowHover {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+

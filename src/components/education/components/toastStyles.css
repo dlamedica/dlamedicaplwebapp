@@ -1,0 +1,67 @@
+/* Toast Animations */
+.education-toast {
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.toast-hidden {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Progress Bar Animation */
+.toast-progress {
+  animation: toastProgress linear;
+  transform-origin: left;
+}
+
+@keyframes toastProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Hover Effect */
+.education-toast:hover {
+  transform: translateY(-2px) scale(1.02);
+  transition: transform 0.2s ease-out;
+}
+
+.education-toast:hover .toast-progress {
+  animation-play-state: paused;
+}
+
+/* Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  .education-toast {
+    filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .education-toast {
+    max-width: calc(100vw - 2rem);
+    min-width: auto;
+  }
+}
+

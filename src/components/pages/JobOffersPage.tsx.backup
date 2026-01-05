@@ -1,0 +1,1253 @@
+import React, { useState, useEffect } from 'react';
+import { FaMapMarkerAlt, FaFilter, FaCalendarAlt, FaMoneyBillWave } from 'react-icons/fa';
+
+interface JobOffer {
+  id: number;
+  company: string;
+  position: string;
+  contractType: string;
+  location: string;
+  category: string;
+  description: string;
+  postedDate: string;
+  zawod_medyczny: string;
+  experience: string;
+  salary: string;
+  salaryType: string;
+  facilityType: string;
+  logo?: string;
+  timeAgo: string;
+}
+
+interface JobFilters {
+  category: string;
+  zawod_medyczny: string;
+  location: string;
+  experience: string;
+  salaryType: string;
+  dateRange: string;
+}
+
+interface JobOffersPageProps {
+  darkMode: boolean;
+  fontSize: 'small' | 'medium' | 'large';
+}
+
+const JobOffersPage: React.FC<JobOffersPageProps> = ({ darkMode, fontSize }) => {
+  const [filters, setFilters] = useState<JobFilters>({
+    category: 'Wszystkie',
+    zawod_medyczny: '',
+    location: '',
+    experience: '',
+    salaryType: '',
+    dateRange: ''
+  });
+
+  const [selectedRegion, setSelectedRegion] = useState('wszystkie');
+  const [isJobFormOpen, setIsJobFormOpen] = useState(false);
+  const [jobFormData, setJobFormData] = useState({
+    company: '',
+    position: '',
+    location: '',
+    contractType: '',
+    category: '',
+    description: '',
+    salary: '',
+    experience: '',
+    email: ''
+  });
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Oferty pracy dla medyków | DlaMedica.pl';
+    
+    let descriptionMeta = document.querySelector('meta[name="description"]');
+    if (descriptionMeta) {
+      descriptionMeta.setAttribute('content', 'Aktualne oferty pracy dla lekarzy, pielęgniarek, ratowników i innych zawodów medycznych.');
+    }
+
+    let ogTitleMeta = document.querySelector('meta[property="og:title"]');
+    if (ogTitleMeta) {
+      ogTitleMeta.setAttribute('content', 'Oferty pracy dla medyków | DlaMedica.pl');
+    }
+
+    let ogDescriptionMeta = document.querySelector('meta[property="og:description"]');
+    if (ogDescriptionMeta) {
+      ogDescriptionMeta.setAttribute('content', 'Aktualne oferty pracy dla lekarzy, pielęgniarek, ratowników i innych zawodów medycznych.');
+    }
+  }, []);
+
+  const getFontSizeClasses = () => {
+    switch (fontSize) {
+      case 'small':
+        return {
+          title: 'text-2xl md:text-3xl',
+          subtitle: 'text-base md:text-lg',
+          cardTitle: 'text-lg md:text-xl',
+          cardText: 'text-sm md:text-base',
+          filterText: 'text-sm',
+          buttonText: 'text-sm'
+        };
+      case 'large':
+        return {
+          title: 'text-4xl md:text-5xl',
+          subtitle: 'text-xl md:text-2xl',
+          cardTitle: 'text-2xl md:text-3xl',
+          cardText: 'text-lg md:text-xl',
+          filterText: 'text-lg',
+          buttonText: 'text-lg'
+        };
+      default:
+        return {
+          title: 'text-3xl md:text-4xl',
+          subtitle: 'text-lg md:text-xl',
+          cardTitle: 'text-xl md:text-2xl',
+          cardText: 'text-base md:text-lg',
+          filterText: 'text-base',
+          buttonText: 'text-base'
+        };
+    }
+  };
+
+  const fontSizes = getFontSizeClasses();
+
+  // Polish regions (voivodeships) for dropdown
+  const polishRegions = [
+    { value: 'wszystkie', label: 'Region: wszystkie' },
+    { value: 'dolnośląskie', label: 'dolnośląskie' },
+    { value: 'kujawsko-pomorskie', label: 'kujawsko-pomorskie' },
+    { value: 'lubelskie', label: 'lubelskie' },
+    { value: 'lubuskie', label: 'lubuskie' },
+    { value: 'łódzkie', label: 'łódzkie' },
+    { value: 'małopolskie', label: 'małopolskie' },
+    { value: 'mazowieckie', label: 'mazowieckie' },
+    { value: 'opolskie', label: 'opolskie' },
+    { value: 'podkarpackie', label: 'podkarpackie' },
+    { value: 'podlaskie', label: 'podlaskie' },
+    { value: 'pomorskie', label: 'pomorskie' },
+    { value: 'śląskie', label: 'śląskie' },
+    { value: 'świętokrzyskie', label: 'świętokrzyskie' },
+    { value: 'warmińsko-mazurskie', label: 'warmińsko-mazurskie' },
+    { value: 'wielkopolskie', label: 'wielkopolskie' },
+    { value: 'zachodniopomorskie', label: 'zachodniopomorskie' },
+    { value: 'zagranica', label: 'zagranica' }
+  ];
+
+  // Polish cities for autocomplete (used in job form)
+  const polishCities = [
+    'Warszawa', 'Kraków', 'Łódź', 'Wrocław', 'Poznań', 'Gdańsk', 'Szczecin', 'Bydgoszcz',
+    'Lublin', 'Białystok', 'Katowice', 'Gdynia', 'Częstochowa', 'Radom', 'Sosnowiec',
+    'Toruń', 'Kielce', 'Rzeszów', 'Gliwice', 'Zabrze', 'Olsztyn', 'Bielsko-Biała',
+    'Bytom', 'Zielona Góra', 'Rybnik', 'Ruda Śląska', 'Opole', 'Tychy', 'Gorzów Wielkopolski',
+    'Płock', 'Dąbrowa Górnicza', 'Elbląg', 'Wałbrzych', 'Włocławek', 'Tarnów', 'Chorzów',
+    'Koszalin', 'Kalisz', 'Legnica', 'Grudziądz', 'Słupsk', 'Jaworzno', 'Jełenia Góra'
+  ];
+
+  // Function to map cities to regions for filtering
+  const getCityRegion = (city: string): string => {
+    const cityRegionMap: { [key: string]: string } = {
+      'Warszawa': 'mazowieckie',
+      'Kraków': 'małopolskie',
+      'Łódź': 'łódzkie',
+      'Wrocław': 'dolnośląskie',
+      'Poznań': 'wielkopolskie',
+      'Gdańsk': 'pomorskie',
+      'Szczecin': 'zachodniopomorskie',
+      'Bydgoszcz': 'kujawsko-pomorskie',
+      'Lublin': 'lubelskie',
+      'Białystok': 'podlaskie',
+      'Katowice': 'śląskie',
+      'Gdynia': 'pomorskie',
+      'Częstochowa': 'śląskie',
+      'Radom': 'mazowieckie',
+      'Sosnowiec': 'śląskie',
+      'Toruń': 'kujawsko-pomorskie',
+      'Kielce': 'świętokrzyskie',
+      'Rzeszów': 'podkarpackie',
+      'Gliwice': 'śląskie',
+      'Zabrze': 'śląskie',
+      'Olsztyn': 'warmińsko-mazurskie',
+      'Bielsko-Biała': 'śląskie',
+      'Bytom': 'śląskie',
+      'Zielona Góra': 'lubuskie',
+      'Rybnik': 'śląskie',
+      'Ruda Śląska': 'śląskie',
+      'Opole': 'opolskie',
+      'Tychy': 'śląskie',
+      'Gorzów Wielkopolski': 'lubuskie',
+      'Płock': 'mazowieckie',
+      'Dąbrowa Górnicza': 'śląskie',
+      'Elbląg': 'warmińsko-mazurskie',
+      'Wałbrzych': 'dolnośląskie',
+      'Włocławek': 'kujawsko-pomorskie',
+      'Tarnów': 'małopolskie',
+      'Chorzów': 'śląskie',
+      'Koszalin': 'zachodniopomorskie',
+      'Kalisz': 'wielkopolskie',
+      'Legnica': 'dolnośląskie',
+      'Grudziądz': 'kujawsko-pomorskie',
+      'Słupsk': 'pomorskie',
+      'Jaworzno': 'śląskie',
+      'Jełenia Góra': 'dolnośląskie'
+    };
+    return cityRegionMap[city] || 'inne';
+  };
+
+  const handleLocationInputChange = (value: string) => {
+    setJobFormData(prev => ({ ...prev, location: value }));
+    
+    if (value.length > 1) {
+      const suggestions = polishCities.filter(city => 
+        city.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setLocationSuggestions(suggestions);
+      setShowLocationSuggestions(true);
+    } else {
+      setShowLocationSuggestions(false);
+    }
+  };
+
+  const selectLocationSuggestion = (city: string) => {
+    setJobFormData(prev => ({ ...prev, location: city }));
+    setShowLocationSuggestions(false);
+  };
+
+  const handleJobFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement job form submission
+    alert('Formularz został wysłany! Oferta będzie sprawdzona przez nasz zespół.');
+    setIsJobFormOpen(false);
+    setJobFormData({
+      company: '',
+      position: '',
+      location: '',
+      contractType: '',
+      category: '',
+      description: '',
+      salary: '',
+      experience: '',
+      email: ''
+    });
+  };
+
+  // Opcje filtrów
+
+  const zawodyMedyczne = [
+    '',
+    // Zawody lekarskie (alfabetycznie)
+    'Anestezjolog',
+    'Chirurg naczyniowy',
+    'Chirurg ogólny',
+    'Chirurg onkologiczny',
+    'Chirurg plastyczny',
+    'Chirurg szczękowo-twarzowy',
+    'Chirurg transplantolog',
+    'Dermatolog',
+    'Dermatolog dziecięcy',
+    'Endokrynolog',
+    'Endokrynolog dziecięcy',
+    'Geriatra',
+    'Ginekolog',
+    'Ginekolog dziecięcy',
+    'Ginekolog onkologiczny',
+    'Gastrolog',
+    'Hematolog',
+    'Hepatolog',
+    'Immunolog',
+    'Internista',
+    'Kardiolog',
+    'Kardiolog dziecięcy',
+    'Laryngolog',
+    'Lekarz bez specjalizacji',
+    'Lekarz chorób zakaźnych',
+    'Lekarz medycyny pracy',
+    'Lekarz paliatywny',
+    'Lekarz rodzinny',
+    'Lekarz sportowy',
+    'Lekarz w trakcie specjalizacji',
+    'Neonatolog',
+    'Neurochirurg',
+    'Neurolog',
+    'Okulista',
+    'Onkolog',
+    'Ortopeda',
+    'Pediatra',
+    'Periodontolog',
+    'Psychiatra',
+    'Psycholog',
+    'Psycholog dziecięcy',
+    'Psychoonkolog',
+    'Psychoterapeuta',
+    'Psychotraumatolog',
+    'Pulmonolog',
+    'Radiolog',
+    'Reumatolog',
+    'Seksuolog',
+    'Stomatolog',
+    'Ultrasonografista',
+    'Urolog',
+    'Urolog dziecięcy',
+    
+    // Zawody pielęgniarskie i położnicze
+    'Pielęgniarka',
+    'Pielęgniarz',
+    'Położna',
+    'Położny',
+    
+    // Zawody techniczne i diagnostyczne
+    'Diagnosta laboratoryjny',
+    'Technik analityki medycznej',
+    'Technik dentystyczny',
+    'Technik elektroradiologii',
+    'Technik farmaceutyczny',
+    'Technik masażysta',
+    'Technik sterylizacji medycznej',
+    
+    // Farmaceuci
+    'Farmaceuta',
+    'Magister farmacji',
+    'Technik farmacji',
+    
+    // Fizjoterapeuci
+    'Fizjoterapeuta',
+    
+    // Inne zawody medyczne
+    'Logopeda',
+    'Optometrysta',
+    'Protetysta słuchu',
+    'Protetyk stomatologiczny',
+    'Specjalista medycyny naturalnej',
+    'Terapeuta'
+  ];
+
+  const experienceLevels = [
+    '',
+    'Specjalista',
+    'W trakcie specjalizacji',
+    'Absolwent'
+  ];
+
+  const salaryTypes = [
+    '',
+    '% od wizyty',
+    'Stawka za godzinę lub wizytę',
+    'Stawka za miesiąc'
+  ];
+
+
+
+  // Funkcja generowania slug
+  const generateSlug = (position: string, location: string): string => {
+    const text = `${position}-${location}`;
+    return text
+      .toLowerCase()
+      .replace(/ą/g, 'a')
+      .replace(/ć/g, 'c')
+      .replace(/ę/g, 'e')
+      .replace(/ł/g, 'l')
+      .replace(/ń/g, 'n')
+      .replace(/ó/g, 'o')
+      .replace(/ś/g, 's')
+      .replace(/ź/g, 'z')
+      .replace(/ż/g, 'z')
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
+  // Funkcja nawigacji do szczegółów ogłoszenia
+  const navigateToJobDetail = (job: JobOffer) => {
+    const slug = generateSlug(job.position, job.location);
+    window.history.pushState({}, '', `/praca/${slug}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  const jobOffers: JobOffer[] = [
+    {
+      id: 1,
+      company: 'Sthetic Klinika dr Jagielskiej',
+      position: 'Ginekolog',
+      contractType: 'Umowa o pracę',
+      location: 'Warszawa',
+      category: 'Lekarze',
+      description: 'Poszukujemy doświadczonego ginekologa do pracy w prywatnej klinice. Oferujemy nowoczesne wyposażenie i atrakcyjne warunki współpracy.',
+      postedDate: '2024-01-15',
+      zawod_medyczny: 'Ginekolog',
+      experience: 'Specjalista',
+      salary: '55%',
+      salaryType: '% od wizyty',
+      facilityType: 'Prywatna placówka',
+      timeAgo: '1 godzina temu'
+    },
+    {
+      id: 2,
+      company: 'Centrum Medyczne Warszawa',
+      position: 'Kardiolog',
+      contractType: 'Kontrakt',
+      location: 'Warszawa',
+      category: 'Lekarze',
+      description: 'Centrum medyczne poszukuje kardiologa do współpracy. Nowoczesny sprzęt diagnostyczny i dobre warunki pracy.',
+      postedDate: '2024-01-12',
+      zawod_medyczny: 'Kardiolog',
+      experience: 'Specjalista',
+      salary: '7 500 zł',
+      salaryType: 'Stawka za miesiąc',
+      facilityType: 'AOS',
+      timeAgo: '3 godziny temu'
+    },
+    {
+      id: 3,
+      company: 'Klinika Medycyny Estetycznej',
+      position: 'Dermatolog',
+      contractType: 'Umowa zlecenie',
+      location: 'Kraków',
+      category: 'Lekarze',
+      description: 'Prestiżowa klinika medycyny estetycznej zatrudni dermatologa. Możliwość rozwoju w dziedzinie dermatologii estetycznej.',
+      postedDate: '2024-01-10',
+      zawod_medyczny: 'Dermatolog',
+      experience: 'Specjalista',
+      salary: '45%',
+      salaryType: '% od wizyty',
+      facilityType: 'Prywatna placówka',
+      timeAgo: '5 godzin temu'
+    },
+    {
+      id: 4,
+      company: 'Szpital Wojewódzki',
+      position: 'Pediatra',
+      contractType: 'Umowa o pracę',
+      location: 'Poznań',
+      category: 'Lekarze',
+      description: 'Szpital wojewódzki poszukuje pediatry do oddziału dziecięcego. Praca w zespole doświadczonych specjalistów.',
+      postedDate: '2024-01-14',
+      zawod_medyczny: 'Pediatra',
+      experience: 'W trakcie specjalizacji',
+      salary: '8 200 zł',
+      salaryType: 'Stawka za miesiąc',
+      facilityType: 'AOS',
+      timeAgo: '1 dzień temu'
+    },
+    {
+      id: 5,
+      company: 'Centrum Rehabilitacji ProMed',
+      position: 'Fizjoterapeuta',
+      contractType: 'Umowa o pracę',
+      location: 'Wrocław',
+      category: 'Fizjoterapeuci',
+      description: 'Centrum rehabilitacji poszukuje fizjoterapeuty do pracy z pacjentami po urazach ortopedycznych i neurologicznych.',
+      postedDate: '2024-01-13',
+      zawod_medyczny: 'Terapeuta',
+      experience: 'Absolwent',
+      salary: '150 zł',
+      salaryType: 'Stawka za godzinę lub wizytę',
+      facilityType: 'Prywatna placówka',
+      timeAgo: '2 dni temu'
+    },
+    {
+      id: 6,
+      company: 'Szpital Dziecięcy',
+      position: 'Neonatolog',
+      contractType: 'Umowa o pracę',
+      location: 'Łódź',
+      category: 'Lekarze',
+      description: 'Szpital dziecięcy poszukuje neonatologa do oddziału intensywnej terapii noworodka.',
+      postedDate: '2024-01-11',
+      zawod_medyczny: 'Neonatolog',
+      experience: 'Specjalista',
+      salary: '9 500 zł',
+      salaryType: 'Stawka za miesiąc',
+      facilityType: 'AOS',
+      timeAgo: '3 dni temu'
+    },
+    {
+      id: 7,
+      company: 'Apteka Centralna',
+      position: 'Farmaceuta',
+      contractType: 'Umowa o pracę',
+      location: 'Kraków',
+      category: 'Farmaceuci',
+      description: 'Apteka centralna poszukuje farmaceuty do pracy w aptece ogólnodostępnej. Doświadczenie w pracy z pacjentami mile widziane.',
+      postedDate: '2024-01-16',
+      zawod_medyczny: 'Farmaceuta',
+      experience: 'Specjalista',
+      salary: 'Nie podano',
+      salaryType: 'Nie podano',
+      facilityType: 'AOS',
+      timeAgo: '4 dni temu'
+    },
+    {
+      id: 8,
+      company: 'Laboratorium Diagnostyczne',
+      position: 'Diagnosta laboratoryjny',
+      contractType: 'Umowa zlecenie',
+      location: 'Wrocław',
+      category: 'Technicy',
+      description: 'Nowoczesne laboratorium diagnostyczne poszukuje diagnosty laboratoryjnego do wykonywania badań biochemicznych.',
+      postedDate: '2024-01-14',
+      zawod_medyczny: 'Diagnosta laboratoryjny',
+      experience: 'Specjalista',
+      salary: '35 zł',
+      salaryType: 'Stawka za godzinę lub wizytę',
+      facilityType: 'AOS',
+      timeAgo: '1 tydzień temu'
+    },
+    {
+      id: 9,
+      company: 'Klinika Psychiatryczna Mind',
+      position: 'Psycholog dziecięcy',
+      contractType: 'Umowa o pracę',
+      location: 'Poznań',
+      category: 'Lekarze',
+      description: 'Klinika psychiatryczna poszukuje psychologa dziecięcego do pracy z młodymi pacjentami.',
+      postedDate: '2024-01-13',
+      zawod_medyczny: 'Psycholog dziecięcy',
+      experience: 'Specjalista',
+      salary: '40%',
+      salaryType: '% od wizyty',
+      facilityType: 'Prywatna placówka',
+      timeAgo: '1 tydzień temu'
+    },
+    {
+      id: 10,
+      company: 'Szpital Specjalistyczny',
+      position: 'Ultrasonografista',
+      contractType: 'Kontrakt',
+      location: 'Katowice',
+      category: 'Lekarze',
+      description: 'Szpital specjalistyczny zatrudni ultrasonografistę do wykonywania badań USG w różnych specjalizacjach.',
+      postedDate: '2024-01-15',
+      zawod_medyczny: 'Ultrasonografista',
+      experience: 'Specjalista',
+      salary: '120 zł',
+      salaryType: 'Stawka za godzinę lub wizytę',
+      facilityType: 'AOS',
+      timeAgo: '2 tygodnie temu'
+    },
+    {
+      id: 11,
+      company: 'Szpital Wojewódzki',
+      position: 'Neurolog',
+      contractType: 'Umowa o pracę',
+      location: 'Gdańsk',
+      category: 'Lekarze',
+      description: 'Szpital wojewódzki poszukuje neurologa do oddziału neurologii.',
+      postedDate: '2024-01-16',
+      zawod_medyczny: 'Neurolog',
+      experience: 'Specjalista',
+      salary: '8 500 zł',
+      salaryType: 'Stawka za miesiąc',
+      facilityType: 'AOS',
+      timeAgo: '3 tygodnie temu'
+    },
+    {
+      id: 12,
+      company: 'Klinika Prywatna',
+      position: 'Ortopeda',
+      contractType: 'Umowa zlecenie',
+      location: 'Szczecin',
+      category: 'Lekarze',
+      description: 'Klinika prywatna zatrudni ortopedę do pracy w poradni ortopedycznej.',
+      postedDate: '2024-01-17',
+      zawod_medyczny: 'Ortopeda',
+      experience: 'Specjalista',
+      salary: '200 zł',
+      salaryType: 'Stawka za godzinę lub wizytę',
+      facilityType: 'Prywatna placówka',
+      timeAgo: '1 miesiąc temu'
+    },
+    {
+      id: 13,
+      company: 'Centrum Medyczne',
+      position: 'Urolog',
+      contractType: 'Umowa o pracę',
+      location: 'Lublin',
+      category: 'Lekarze',
+      description: 'Centrum medyczne poszukuje urologa do pracy w poradni urologicznej.',
+      postedDate: '2024-01-18',
+      zawod_medyczny: 'Urolog',
+      experience: 'Specjalista',
+      salary: '7 800 zł',
+      salaryType: 'Stawka za miesiąc',
+      facilityType: 'AOS',
+      timeAgo: '1 miesiąc temu'
+    }
+  ];
+
+  // Funkcja filtrowania ofert
+  const getFilteredJobs = () => {
+    return jobOffers.filter(job => {
+      // Filtr kategorii
+      if (filters.category !== 'Wszystkie' && job.category !== filters.category) {
+        return false;
+      }
+      
+      // Filtr specjalizacji
+      if (filters.zawod_medyczny && job.zawod_medyczny !== filters.zawod_medyczny) {
+        return false;
+      }
+      
+      // Filtr regionu
+      if (selectedRegion !== 'wszystkie') {
+        const jobRegion = getCityRegion(job.location);
+        if (jobRegion !== selectedRegion) {
+          return false;
+        }
+      }
+      
+      // Filtr doświadczenia
+      if (filters.experience && job.experience !== filters.experience) {
+        return false;
+      }
+      
+      // Filtr typu wynagrodzenia
+      if (filters.salaryType && job.salaryType !== filters.salaryType) {
+        return false;
+      }
+      
+      // Filtr daty (symulacja - w prawdziwej aplikacji byłoby to porównanie dat)
+      if (filters.dateRange) {
+        const postDate = new Date(job.postedDate);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - postDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        switch (filters.dateRange) {
+          case 'Ostatnie 24h':
+            if (diffDays > 1) return false;
+            break;
+          case 'Ostatni tydzień':
+            if (diffDays > 7) return false;
+            break;
+          case 'Ostatni miesiąc':
+            if (diffDays > 30) return false;
+            break;
+        }
+      }
+      
+      return true;
+    });
+  };
+
+  const filteredJobs = getFilteredJobs();
+
+  // Funkcja do aktualizacji filtrów
+  const updateFilter = (filterName: keyof JobFilters, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: value
+    }));
+  };
+
+  return (
+    <div className={`min-h-screen py-12 ${darkMode ? 'bg-black' : 'bg-white'} transition-colors duration-300`}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <h1 className={`font-bold mb-6 ${fontSizes.title} ${darkMode ? 'text-white' : 'text-black'}`}>
+            Oferty pracy dla medyków
+          </h1>
+          <p className={`${fontSizes.subtitle} ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-4xl mx-auto leading-relaxed`}>
+            Przeglądaj aktualne ogłoszenia dla lekarzy, pielęgniarek, ratowników, fizjoterapeutów 
+            i innych specjalistów ochrony zdrowia.
+          </p>
+          
+          {/* Decorative element */}
+          <div className="flex justify-center mt-8">
+            <div className="w-24 h-1 bg-[#7ec8ff] rounded-full"></div>
+          </div>
+        </div>
+
+        {/* Filter Section */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Zawód medyczny */
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="mr-1">🧰</span> Zawód medyczny
+              </label>
+              <select
+                value={filters.zawod_medyczny}
+                onChange={(e) => updateFilter('zawod_medyczny', e.target.value)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] shadow-sm ${
+                  darkMode
+                    ? 'bg-black border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                <option value="" className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                  Wszystko
+                </option>
+                {/* Lekarze */}
+                <optgroup label="👨‍⚕️ Lekarze">
+                  {zawodyMedyczne.slice(1, 54).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </optgroup>
+                {/* Pielęgniarki */}
+                <optgroup label="👩‍⚕️ Pielęgniarki">
+                  {zawodyMedyczne.slice(54, 58).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </optgroup>
+                {/* Technicy */}
+                <optgroup label="🔬 Technicy">
+                  {zawodyMedyczne.slice(58, 65).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </optgroup>
+                {/* Farmaceuci */}
+                <optgroup label="💊 Farmaceuci">
+                  {zawodyMedyczne.slice(65, 68).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </optgroup>
+                {/* Fizjoterapeuci */}
+                <optgroup label="🏥 Fizjoterapeuci">
+                  {zawodyMedyczne.slice(68, 69).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </optgroup>
+                {/* Inne */}
+                <optgroup label="⚕️ Inne">
+                  {zawodyMedyczne.slice(69).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="mr-1">🗺️</span> Region
+              </label>
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] shadow-sm ${
+                  darkMode
+                    ? 'bg-black border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                {polishRegions.map((region) => (
+                  <option key={region.value} value={region.value}>
+                    {region.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Doświadczenie */}
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="mr-1">💼</span> Doświadczenie
+              </label>
+              <select
+                value={filters.experience}
+                onChange={(e) => updateFilter('experience', e.target.value)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] shadow-sm ${
+                  darkMode
+                    ? 'bg-black border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                <option value="">Wszystko</option>
+                {experienceLevels.slice(1).map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Wynagrodzenie */}
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="mr-1">💰</span> Wynagrodzenie
+              </label>
+              <select
+                value={filters.salaryType}
+                onChange={(e) => updateFilter('salaryType', e.target.value)}
+                className={`w-full px-3 py-2.5 text-sm rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] shadow-sm ${
+                  darkMode
+                    ? 'bg-black border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                <option value="">Wszystko</option>
+                {salaryTypes.slice(1).map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Clear filters button */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                setFilters({
+                  category: 'Wszystkie',
+                  zawod_medyczny: '',
+                  location: '',
+                  experience: '',
+                  salaryType: '',
+                  dateRange: ''
+                });
+                setSelectedRegion('wszystkie');
+              }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                darkMode
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+              }`}
+            >
+              <FaFilter className="inline mr-2" />
+              Wyczyść filtry
+            </button>
+          </div>
+        </div>
+
+        {/* Job Offers Section */}
+        <div className="mb-12">
+          {filteredJobs.length === 0 ? (
+            <div className="text-center py-12">
+              <div className={`text-6xl mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                💼
+              </div>
+              <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-black'}`}>
+                Brak ofert spełniających wybrane kryteria
+              </h2>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Spróbuj zmienić filtry lub sprawdź ponownie później.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className={`mb-6 text-center ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="text-[#7ec8ff] text-lg">💼</span>
+                  <span>Znaleziono {filteredJobs.length} {filteredJobs.length === 1 ? 'ofertę' : 'ofert'}</span>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                {filteredJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    onClick={() => navigateToJobDetail(job)}
+                    className={`rounded-lg p-4 shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer ${
+                      darkMode ? 'bg-black border border-gray-700' : 'bg-white border border-gray-200'
+                    }`}
+                    aria-label={`Oferta pracy: ${job.position} w ${job.company}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Left side - Job info */}
+                      <div className="flex items-center space-x-4 flex-1">
+                        {/* Logo placeholder */}
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl ${
+                          darkMode ? 'bg-black' : 'bg-gray-100'
+                        }`}>
+                          {job.logo ? (
+                            <img src={job.logo} alt={`Logo ${job.company}`} className="w-10 h-10 object-contain" />
+                          ) : (
+                            <span className="text-[#7ec8ff]">🏥</span>
+                          )}
+                        </div>
+
+                        {/* Job details */}
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h2 className={`${fontSizes.cardTitle} font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
+                              {job.position}
+                            </h2>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              job.facilityType === 'Prywatna placówka' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {job.facilityType}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-4 text-sm">
+                            <div className="flex items-center space-x-1">
+                              <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {job.company}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <FaMapMarkerAlt className="text-xs text-[#7ec8ff]" />
+                              <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {job.location}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <FaCalendarAlt className="text-xs text-[#7ec8ff]" />
+                              <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {job.timeAgo}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right side - Salary info */}
+                      <div className="text-right">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <FaMoneyBillWave className="text-sm text-[#7ec8ff]" />
+                          <span className={`${fontSizes.cardText} font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
+                            {job.salary === 'Nie podano' ? 'Nie podano' : job.salary}
+                          </span>
+                        </div>
+                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {job.salaryType === 'Nie podano' ? '' : job.salaryType}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Information Section */}
+        <div className={`rounded-lg p-8 ${darkMode ? 'bg-black border border-gray-700' : 'bg-gray-50 border border-gray-200'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h2 className={`${fontSizes.cardTitle} font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
+                Jak aplikować?
+              </h2>
+              <div className="space-y-3">
+                <div className={`${fontSizes.cardText} ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-start space-x-2`}>
+                  <span className="text-[#7ec8ff] font-bold">1.</span>
+                  <span>Przeglądaj dostępne oferty pracy</span>
+                </div>
+                <div className={`${fontSizes.cardText} ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-start space-x-2`}>
+                  <span className="text-[#7ec8ff] font-bold">2.</span>
+                  <span>Wybierz ofertę odpowiadającą Twoim kwalifikacjom</span>
+                </div>
+                <div className={`${fontSizes.cardText} ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-start space-x-2`}>
+                  <span className="text-[#7ec8ff] font-bold">3.</span>
+                  <span>Kliknij "Aplikuj" i wypełnij formularz</span>
+                </div>
+                <div className={`${fontSizes.cardText} ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-start space-x-2`}>
+                  <span className="text-[#7ec8ff] font-bold">4.</span>
+                  <span>Poczekaj na odpowiedź od pracodawcy</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h2 className={`${fontSizes.cardTitle} font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
+                Dla pracodawców
+              </h2>
+              <p className={`${fontSizes.cardText} ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4 leading-relaxed`}>
+                Szukasz wykwalifikowanych specjalistów medycznych? 
+                Opublikuj swoją ofertę pracy na naszej platformie i dotrzej do tysięcy profesjonalistów.
+              </p>
+              <button
+                onClick={() => setIsJobFormOpen(true)}
+                className={`px-6 py-3 ${fontSizes.buttonText} font-semibold rounded-lg transition-colors duration-200 bg-[#7ec8ff] text-black hover:bg-[#6bb8ef] shadow-md hover:shadow-lg`}
+                aria-label="Dodaj ofertę pracy - funkcja dla pracodawców"
+              >
+                Dodaj ofertę pracy
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Coming Soon Section */}
+        <div className="mt-12 text-center">
+          <div className={`inline-block px-6 py-3 rounded-lg ${darkMode ? 'bg-black border border-gray-700' : 'bg-gray-50 border border-gray-200'}`}>
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl" aria-hidden="true">🚀</span>
+              <span className={`${fontSizes.cardText} ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Więcej funkcji i ofert pracy wkrótce!
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Job Form Modal */}
+      {isJobFormOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto ${
+            darkMode ? 'bg-black border border-gray-700' : 'bg-white border border-gray-200'
+          }`}>
+            {/* Modal Header */}
+            <div className={`p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="flex items-center justify-between">
+                <h2 className={`${fontSizes.title} font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Dodaj ofertę pracy
+                </h2>
+                <button
+                  onClick={() => setIsJobFormOpen(false)}
+                  className={`p-2 rounded-lg transition-colors duration-200 ${
+                    darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <form onSubmit={handleJobFormSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Company Name */}
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Nazwa firmy *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={jobFormData.company}
+                      onChange={(e) => setJobFormData(prev => ({ ...prev, company: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                        darkMode
+                          ? 'bg-black border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Nazwa placówki medycznej"
+                    />
+                  </div>
+
+                  {/* Position */}
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Stanowisko *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={jobFormData.position}
+                      onChange={(e) => setJobFormData(prev => ({ ...prev, position: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                        darkMode
+                          ? 'bg-black border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="np. Lekarz internista"
+                    />
+                  </div>
+
+                  {/* Location with Autocomplete */}
+                  <div className="relative">
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Lokalizacja *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={jobFormData.location}
+                      onChange={(e) => handleLocationInputChange(e.target.value)}
+                      onFocus={() => jobFormData.location.length > 1 && setShowLocationSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                        darkMode
+                          ? 'bg-black border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Miasto"
+                    />
+                    
+                    {/* Location Suggestions */}
+                    {showLocationSuggestions && locationSuggestions.length > 0 && (
+                      <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg border shadow-lg z-50 ${
+                        darkMode ? 'bg-black border-gray-600' : 'bg-white border-gray-300'
+                      }`}>
+                        {locationSuggestions.map((city) => (
+                          <button
+                            key={city}
+                            type="button"
+                            onClick={() => selectLocationSuggestion(city)}
+                            className={`w-full px-4 py-2 text-left hover:bg-[#7ec8ff] hover:text-black transition-colors duration-200 ${
+                              darkMode ? 'text-white' : 'text-gray-900'
+                            } first:rounded-t-lg last:rounded-b-lg`}
+                          >
+                            {city}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contract Type */}
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Rodzaj umowy *
+                    </label>
+                    <select
+                      required
+                      value={jobFormData.contractType}
+                      onChange={(e) => setJobFormData(prev => ({ ...prev, contractType: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                        darkMode
+                          ? 'bg-black border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="">Wybierz rodzaj umowy</option>
+                      <option value="Umowa o pracę">Umowa o pracę</option>
+                      <option value="Umowa zlecenie">Umowa zlecenie</option>
+                      <option value="Umowa o dzieło">Umowa o dzieło</option>
+                      <option value="B2B">B2B</option>
+                      <option value="Praktyki/Staż">Praktyki/Staż</option>
+                    </select>
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Kategoria *
+                    </label>
+                    <select
+                      required
+                      value={jobFormData.category}
+                      onChange={(e) => setJobFormData(prev => ({ ...prev, category: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                        darkMode
+                          ? 'bg-black border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="">Wybierz kategorię</option>
+                      <option value="Lekarze">Lekarze</option>
+                      <option value="Pielęgniarki">Pielęgniarki</option>
+                      <option value="Ratownicy">Ratownicy medyczni</option>
+                      <option value="Fizjoterapeuci">Fizjoterapeuci</option>
+                      <option value="Technicy">Technicy medyczni</option>
+                      <option value="Farmaceuci">Farmaceuci</option>
+                      <option value="Inne">Inne</option>
+                    </select>
+                  </div>
+
+                  {/* Experience */}
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Wymagane doświadczenie
+                    </label>
+                    <select
+                      value={jobFormData.experience}
+                      onChange={(e) => setJobFormData(prev => ({ ...prev, experience: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                        darkMode
+                          ? 'bg-black border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="">Nie określono</option>
+                      <option value="Bez doświadczenia">Bez doświadczenia</option>
+                      <option value="1-2 lata">1-2 lata</option>
+                      <option value="3-5 lat">3-5 lat</option>
+                      <option value="5+ lat">5+ lat</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Salary */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Wynagrodzenie
+                  </label>
+                  <input
+                    type="text"
+                    value={jobFormData.salary}
+                    onChange={(e) => setJobFormData(prev => ({ ...prev, salary: e.target.value }))}
+                    className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                      darkMode
+                        ? 'bg-black border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    placeholder="np. 5000-7000 PLN brutto"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Opis stanowiska *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={jobFormData.description}
+                    onChange={(e) => setJobFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                      darkMode
+                        ? 'bg-black border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    placeholder="Opisz wymagania, zakres obowiązków i oferowane korzyści..."
+                  />
+                </div>
+
+                {/* Contact Email */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Email kontaktowy *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={jobFormData.email}
+                    onChange={(e) => setJobFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className={`w-full px-4 py-3 rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#7ec8ff] focus:border-[#7ec8ff] ${
+                      darkMode
+                        ? 'bg-black border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    placeholder="kontakt@firma.pl"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsJobFormOpen(false)}
+                    className={`flex-1 py-3 px-6 ${fontSizes.buttonText} font-semibold rounded-lg transition-colors duration-200 ${
+                      darkMode
+                        ? 'bg-gray-800 text-white border border-gray-600 hover:bg-gray-700'
+                        : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                    }`}
+                  >
+                    Anuluj
+                  </button>
+                  <button
+                    type="submit"
+                    className={`flex-1 py-3 px-6 ${fontSizes.buttonText} font-semibold rounded-lg transition-all duration-200 bg-[#7ec8ff] text-black hover:bg-[#6bb8ef] shadow-md hover:shadow-lg`}
+                  >
+                    Wyślij ofertę
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default JobOffersPage;

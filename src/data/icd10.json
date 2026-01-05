@@ -1,0 +1,77 @@
+[
+  {
+    "code": "A00",
+    "name": "Cholera",
+    "description": "Ostra infekcja przewodu pokarmowego wywoływana przez bakterie Vibrio cholerae"
+  },
+  {
+    "code": "A01",
+    "name": "Tyfus i paratyfus",
+    "description": "Bakteryjne zakażenie układu pokarmowego"
+  },
+  {
+    "code": "A02",
+    "name": "Inne zakażenia pałeczkami Salmonella",
+    "description": "Zakażenia żołądkowo-jelitowe wywołane przez bakterie Salmonella"
+  },
+  {
+    "code": "E10",
+    "name": "Cukrzyca typu 1",
+    "description": "Choroba metaboliczna charakteryzująca się niedoborem insuliny"
+  },
+  {
+    "code": "E11",
+    "name": "Cukrzyca typu 2",
+    "description": "Choroba metaboliczna charakteryzująca się insulinoopornością"
+  },
+  {
+    "code": "E12",
+    "name": "Cukrzyca związana z niedożywieniem",
+    "description": "Rzadka forma cukrzycy występująca w krajach rozwijających się"
+  },
+  {
+    "code": "I10",
+    "name": "Nadciśnienie samoistne",
+    "description": "Pierwotne nadciśnienie tętnicze o nieznanej etiologii"
+  },
+  {
+    "code": "I11",
+    "name": "Choroba nadciśnieniowa serca",
+    "description": "Powikłania sercowe wywołane nadciśnieniem tętniczym"
+  },
+  {
+    "code": "J44",
+    "name": "Przewlekła obturacyjna choroba płuc",
+    "description": "Choroba charakteryzująca się ograniczeniem przepływu powietrza w płucach"
+  },
+  {
+    "code": "J45",
+    "name": "Astma",
+    "description": "Przewlekła choroba zapalna dróg oddechowych"
+  },
+  {
+    "code": "F32",
+    "name": "Epizod depresyjny",
+    "description": "Zaburzenie nastroju charakteryzujące się obniżeniem nastroju"
+  },
+  {
+    "code": "F33",
+    "name": "Nawracające zaburzenia depresyjne",
+    "description": "Powtarzające się epizody depresyjne"
+  },
+  {
+    "code": "G43",
+    "name": "Migrena",
+    "description": "Pierwotny ból głowy o charakterze napadowym"
+  },
+  {
+    "code": "M79",
+    "name": "Inne zaburzenia tkanek miękkich",
+    "description": "Różnorodne schorzenia tkanek miękkich"
+  },
+  {
+    "code": "N18",
+    "name": "Przewlekła choroba nerek",
+    "description": "Postępujące pogorszenie funkcji nerek"
+  }
+]
