@@ -1,4 +1,4 @@
-// Auto-deploy test
+// Auto-deploy test v2 - live update!
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
