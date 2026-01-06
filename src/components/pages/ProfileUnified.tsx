@@ -4,7 +4,7 @@
  */
 
 import { MockProfileService } from '../../services/mockProfileService';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   OverviewIcon,
@@ -52,6 +52,7 @@ const ProfileUnified: React.FC<ProfileUnifiedProps> = ({ darkMode, fontSize }) =
   const { user, profile, signOut, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<{ [K in TabId]?: boolean }>({ overview: true });
   const [errors, setErrors] = useState<{ [K in TabId]?: string }>({});
 
@@ -205,6 +206,23 @@ const ProfileUnified: React.FC<ProfileUnifiedProps> = ({ darkMode, fontSize }) =
       loadOverview();
     }
   }, [user]);
+
+  // Zamknij menu użytkownika przy kliknięciu poza nim
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   // Inicjalizuj formularz edycji gdy profil się załaduje
   useEffect(() => {
@@ -890,7 +908,7 @@ const ProfileUnified: React.FC<ProfileUnifiedProps> = ({ darkMode, fontSize }) =
                 Edytuj profil
               </CustomButton>
 
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu((v) => !v)}
                   className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
