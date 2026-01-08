@@ -2,7 +2,7 @@
  * Serwis do zarządzania newsletterem i powiadomieniami email
  */
 
-import { db } from '../lib/apiClient';
+import { apiCall } from '../lib/apiClient';
 
 export interface NewsletterSubscription {
   id: string;
@@ -38,28 +38,12 @@ export const subscribeToNewsletter = async (
   preferences?: Partial<NewsletterSubscription['preferences']>
 ): Promise<NewsletterSubscription> => {
   try {
-    const { data: { user } } = await db.auth.getUser();
-    
-    const defaultPreferences = {
-      promotions: true,
-      new_products: true,
-      price_drops: false,
-      weekly_digest: true,
-      ...preferences,
-    };
+    const { data, error } = await apiCall('/newsletter/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ email, preferences }),
+    });
 
-    const { data, error } = await db
-      .from('newsletter_subscriptions')
-      .upsert({
-        user_id: user?.id || null,
-        email,
-        subscribed: true,
-        preferences: defaultPreferences,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return data;
   } catch (error: any) {
     console.error('Error subscribing to newsletter:', error);
@@ -72,12 +56,12 @@ export const subscribeToNewsletter = async (
  */
 export const unsubscribeFromNewsletter = async (email: string): Promise<void> => {
   try {
-    const { error } = await db
-      .from('newsletter_subscriptions')
-      .update({ subscribed: false })
-      .eq('email', email);
+    const { error } = await apiCall('/newsletter/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   } catch (error: any) {
     console.error('Error unsubscribing from newsletter:', error);
     throw new Error(error.message || 'Nie udało się anulować subskrypcji');

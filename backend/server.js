@@ -1,3 +1,4 @@
+// Auto-deploy test v2 - live update!
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -184,6 +185,8 @@ app.use('/api/quiz', require('./routes/quiz'));
 app.use('/api/security', require('./routes/security')); // 🔒 Security endpoints
 app.use('/api/profile', require('./routes/profile')); // Unified profile endpoints
 app.use('/api/articles', require('./routes/articles')); // 📰 Artykuły
+app.use('/api/newsletter', require('./routes/newsletter')); // 📧 Newsletter
+app.use('/api/events', require('./routes/events')); // 📅 Wydarzenia
 
 // 🔒 BEZPIECZEŃSTWO: Bezpieczny health check
 const { secureHealthCheck, detailedHealthCheck } = require('./middleware/healthCheckSecurity');
