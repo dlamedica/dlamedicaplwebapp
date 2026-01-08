@@ -1,6 +1,6 @@
 /**
  * MCP Server dla DlaMedica
- * Daje Claude dostęp do bazy danych i systemu
+ * Daje Claude dostęp do bazy danych, systemu i n8n
  */
 
 const express = require('express');
@@ -24,6 +24,10 @@ const pool = new Pool({
 
 // Secret do autoryzacji (zmień na własny!)
 const MCP_SECRET = process.env.MCP_SECRET || 'dlamedica-mcp-secret-2025';
+
+// n8n Configuration
+const N8N_URL = process.env.N8N_URL || 'https://dlamedica.app.n8n.cloud';
+const N8N_API_KEY = process.env.N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZDU4ODQ4My0zZjEyLTQ0MDctODJhYi05NWRhMmRjOWUyYmUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzY2OTQ4OTQ5fQ.tEFpN-03zsC_lg3Vnwn5XQgya33h4ZCqLg73C8PXT9o';
 
 // Middleware autoryzacji
 const authorize = (req, res, next) => {
@@ -95,6 +99,51 @@ app.get('/tools', authorize, (req, res) => {
         parameters: {
           process_name: { type: 'string', description: 'Nazwa procesu do restartu' }
         }
+      },
+      // n8n Tools
+      {
+        name: 'n8n_list_workflows',
+        description: 'Pokaż listę wszystkich workflow w n8n'
+      },
+      {
+        name: 'n8n_get_workflow',
+        description: 'Pobierz szczegóły workflow',
+        parameters: {
+          workflow_id: { type: 'string', description: 'ID workflow' }
+        }
+      },
+      {
+        name: 'n8n_activate_workflow',
+        description: 'Aktywuj/deaktywuj workflow',
+        parameters: {
+          workflow_id: { type: 'string', description: 'ID workflow' },
+          active: { type: 'boolean', description: 'true = aktywuj, false = deaktywuj' }
+        }
+      },
+      {
+        name: 'n8n_execute_workflow',
+        description: 'Uruchom workflow manualnie',
+        parameters: {
+          workflow_id: { type: 'string', description: 'ID workflow' },
+          data: { type: 'object', description: 'Dane wejściowe (opcjonalne)', optional: true }
+        }
+      },
+      {
+        name: 'n8n_create_workflow',
+        description: 'Stwórz nowy workflow',
+        parameters: {
+          name: { type: 'string', description: 'Nazwa workflow' },
+          nodes: { type: 'array', description: 'Tablica nodes workflow' },
+          connections: { type: 'object', description: 'Połączenia między nodes' }
+        }
+      },
+      {
+        name: 'n8n_update_workflow',
+        description: 'Aktualizuj istniejący workflow',
+        parameters: {
+          workflow_id: { type: 'string', description: 'ID workflow' },
+          data: { type: 'object', description: 'Dane do aktualizacji' }
+        }
       }
     ]
   });
@@ -137,6 +186,38 @@ app.post('/execute', authorize, async (req, res) => {
 
       case 'pm2_restart':
         result = await runCommand(`pm2 restart ${parameters.process_name}`);
+        break;
+
+      // n8n Tools
+      case 'n8n_list_workflows':
+        result = await n8nRequest('GET', '/workflows');
+        break;
+
+      case 'n8n_get_workflow':
+        result = await n8nRequest('GET', `/workflows/${parameters.workflow_id}`);
+        break;
+
+      case 'n8n_activate_workflow':
+        result = await n8nRequest('PATCH', `/workflows/${parameters.workflow_id}`, {
+          active: parameters.active
+        });
+        break;
+
+      case 'n8n_execute_workflow':
+        result = await n8nRequest('POST', `/workflows/${parameters.workflow_id}/run`, parameters.data || {});
+        break;
+
+      case 'n8n_create_workflow':
+        result = await n8nRequest('POST', '/workflows', {
+          name: parameters.name,
+          nodes: parameters.nodes,
+          connections: parameters.connections,
+          active: false
+        });
+        break;
+
+      case 'n8n_update_workflow':
+        result = await n8nRequest('PUT', `/workflows/${parameters.workflow_id}`, parameters.data);
         break;
 
       default:
@@ -212,7 +293,7 @@ async function runCommand(command) {
   const allowedPrefixes = [
     'pm2 ', 'ls ', 'cat ', 'head ', 'tail ', 'grep ',
     'df ', 'free ', 'uptime', 'whoami', 'pwd', 'date',
-    'npm ', 'node '
+    'npm ', 'node ', 'curl '
   ];
 
   const isAllowed = allowedPrefixes.some(prefix => command.startsWith(prefix));
@@ -229,6 +310,37 @@ async function runCommand(command) {
       }
     });
   });
+}
+
+// ============================================
+// n8n API Functions
+// ============================================
+
+async function n8nRequest(method, endpoint, body = null) {
+  const url = `${N8N_URL}/api/v1${endpoint}`;
+
+  const options = {
+    method,
+    headers: {
+      'X-N8N-API-KEY': N8N_API_KEY,
+      'Content-Type': 'application/json',
+    },
+  };
+
+  if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+    options.body = JSON.stringify(body);
+  }
+
+  console.log(`🔗 n8n API: ${method} ${endpoint}`);
+
+  const response = await fetch(url, options);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`n8n API Error (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
 }
 
 // ============================================
