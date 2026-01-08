@@ -1,0 +1,216 @@
+{
+  "name": "DlaMedica Newsletter Integration",
+  "description": "HTTP Request nodes do integracji z DlaMedica API",
+  "nodes": [
+    {
+      "id": "dlamedica-subscribers",
+      "name": "📋 Pobierz Subskrybentów",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://dlamedica.pl/api/newsletter/subscribers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.headerAuth.value }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CREDENTIAL_ID",
+          "name": "DlaMedica API Key"
+        }
+      }
+    },
+    {
+      "id": "dlamedica-content",
+      "name": "📰 Pobierz Treści",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 500],
+      "parameters": {
+        "method": "GET",
+        "url": "https://dlamedica.pl/api/newsletter/content",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.headerAuth.value }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CREDENTIAL_ID",
+          "name": "DlaMedica API Key"
+        }
+      }
+    },
+    {
+      "id": "dlamedica-webhook",
+      "name": "📤 Wyślij Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "https://dlamedica.pl/api/newsletter/webhook",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.headerAuth.value }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event",
+              "value": "={{ $json.event || 'email_sent' }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "campaign_id",
+              "value": "={{ $json.campaign_id || 'newsletter-' + $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CREDENTIAL_ID",
+          "name": "DlaMedica API Key"
+        }
+      }
+    },
+    {
+      "id": "merge-data",
+      "name": "🔗 Połącz Dane",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1000, 400],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    },
+    {
+      "id": "prepare-email",
+      "name": "✉️ Przygotuj Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 400],
+      "parameters": {
+        "jsCode": "// Przygotuj dane do generowania emaila\nconst subscribers = $input.first().json.subscribers || [];\nconst articles = $input.first().json.articles || [];\n\nconst emailData = {\n  subscriberCount: subscribers.length,\n  subscribers: subscribers,\n  articleCount: articles.length,\n  articles: articles,\n  campaignDate: new Date().toISOString().split('T')[0],\n  campaignType: getDayEmailType()\n};\n\nfunction getDayEmailType() {\n  const day = new Date().getDay();\n  const types = {\n    0: 'week_preview',     // Niedziela\n    1: 'weekly_digest',    // Poniedziałek\n    2: 'edu_spotlight',    // Wtorek\n    3: 'career_pulse',     // Środa\n    4: 'tool_thursday',    // Czwartek\n    5: 'weekend_read',     // Piątek\n    6: 'science_saturday'  // Sobota\n  };\n  return types[day] || 'general';\n}\n\nreturn [{ json: emailData }];"
+      }
+    }
+  ],
+  "connections": {
+    "dlamedica-subscribers": {
+      "main": [
+        [
+          {
+            "node": "merge-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dlamedica-content": {
+      "main": [
+        [
+          {
+            "node": "merge-data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "merge-data": {
+      "main": [
+        [
+          {
+            "node": "prepare-email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "credentials_setup": {
+    "name": "DlaMedica API Key",
+    "type": "httpHeaderAuth",
+    "data": {
+      "name": "X-API-Key",
+      "value": "dlamedica-n8n-key-2025"
+    }
+  }
+}
