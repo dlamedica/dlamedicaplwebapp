@@ -186,6 +186,7 @@ app.use('/api/security', require('./routes/security')); // 🔒 Security endpoin
 app.use('/api/profile', require('./routes/profile')); // Unified profile endpoints
 app.use('/api/articles', require('./routes/articles')); // 📰 Artykuły
 app.use('/api/newsletter', require('./routes/newsletter')); // 📧 Newsletter
+app.use('/api/events', require('./routes/events')); // 📅 Wydarzenia
 
 // 🔒 BEZPIECZEŃSTWO: Bezpieczny health check
 const { secureHealthCheck, detailedHealthCheck } = require('./middleware/healthCheckSecurity');
