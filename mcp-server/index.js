@@ -49,6 +49,67 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ============================================
+// PUBLIC ENDPOINTS (dla Claude WebFetch)
+// Token w query string zamiast header
+// ============================================
+
+/**
+ * Publiczny execute - token w query
+ * GET /public/execute?token=xxx&tool=n8n_list_workflows
+ * POST /public/execute?token=xxx  body: {tool, parameters}
+ */
+app.all('/public/execute', async (req, res) => {
+  const token = req.query.token;
+  if (token !== MCP_SECRET) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
+
+  const tool = req.query.tool || req.body?.tool;
+  const parameters = req.query.parameters ? JSON.parse(req.query.parameters) : (req.body?.parameters || {});
+
+  if (!tool) {
+    return res.status(400).json({ error: 'Tool is required' });
+  }
+
+  try {
+    let result;
+
+    switch (tool) {
+      case 'query_database':
+        result = await queryDatabase(parameters.sql, parameters.params);
+        break;
+      case 'list_tables':
+        result = await listTables();
+        break;
+      case 'describe_table':
+        result = await describeTable(parameters.table_name);
+        break;
+      case 'n8n_list_workflows':
+        result = await n8nRequest('GET', '/workflows');
+        break;
+      case 'n8n_get_workflow':
+        result = await n8nRequest('GET', `/workflows/${parameters.workflow_id}`);
+        break;
+      case 'n8n_activate_workflow':
+        result = await n8nRequest('PATCH', `/workflows/${parameters.workflow_id}`, {
+          active: parameters.active === 'true' || parameters.active === true
+        });
+        break;
+      case 'pm2_status':
+        result = await runCommand('pm2 jlist');
+        break;
+      default:
+        return res.status(400).json({ error: `Unknown tool: ${tool}` });
+    }
+
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error('Public MCP Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 /**
  * Lista dostępnych narzędzi (tools)
  */
