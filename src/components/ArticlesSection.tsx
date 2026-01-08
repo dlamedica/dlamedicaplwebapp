@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import articlesData from '../data/articles.json';
 import { formatPublishedDate, useAutoRefreshTime } from '../utils/dateFormatter';
 import { ArticleLifecycleService } from '../services/articleLifecycleService';
 import { PopularArticlesService } from '../services/popularArticlesService';
+import { fetchArticles, Article as ApiArticle, getArticleCategories } from '../services/articlesService';
+import articlesData from '../data/articles.json'; // Fallback dla trybu offline
 
 interface Article {
   id: number;
@@ -39,15 +40,37 @@ const ArticlesSection: React.FC<ArticlesSectionProps> = ({ darkMode, fontSize })
     ArticleLifecycleService.initialize();
     PopularArticlesService.initialize();
 
-    // Filtruj tylko aktywne artykuły (nie przeterminowane)
-    const activeArticles = ArticleLifecycleService.filterActiveArticles(articlesData as any);
+    const loadArticles = async () => {
+      try {
+        // Próbuj pobrać z API
+        const apiArticles = await fetchArticles({ limit: 50 });
 
-    // Wygeneruj przykładowe dane popularności dla demonstracji
-    if (activeArticles.length > 0) {
-      PopularArticlesService.generateSampleData(activeArticles.map(a => a.id));
-    }
+        if (apiArticles.length > 0) {
+          // Wygeneruj dane popularności
+          PopularArticlesService.generateSampleData(apiArticles.map(a => a.id));
+          setArticles(apiArticles as Article[]);
+          console.log('📰 Artykuły załadowane z API:', apiArticles.length);
+        } else {
+          // Fallback do lokalnych danych
+          const activeArticles = ArticleLifecycleService.filterActiveArticles(articlesData as any);
+          if (activeArticles.length > 0) {
+            PopularArticlesService.generateSampleData(activeArticles.map(a => a.id));
+          }
+          setArticles(activeArticles);
+          console.log('📰 Artykuły załadowane z pliku lokalnego (fallback)');
+        }
+      } catch (error) {
+        console.error('Błąd ładowania artykułów z API:', error);
+        // Fallback do lokalnych danych
+        const activeArticles = ArticleLifecycleService.filterActiveArticles(articlesData as any);
+        if (activeArticles.length > 0) {
+          PopularArticlesService.generateSampleData(activeArticles.map(a => a.id));
+        }
+        setArticles(activeArticles);
+      }
+    };
 
-    setArticles(activeArticles);
+    loadArticles();
   }, []);
 
   const filteredArticles = activeCategory === 'Najnowsze'
