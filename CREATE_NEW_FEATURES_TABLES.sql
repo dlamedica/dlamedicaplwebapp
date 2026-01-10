@@ -136,6 +136,24 @@ CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
 CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at DESC);
 
 -- ============================================
+-- 5. PUSH NOTIFICATIONS
+-- ============================================
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES auth.users(id) ON DELETE CASCADE,
+    endpoint VARCHAR(1000) NOT NULL UNIQUE,
+    keys_p256dh VARCHAR(255),
+    keys_auth VARCHAR(255),
+    topics TEXT[] DEFAULT ARRAY['general'],
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON push_subscriptions(endpoint);
+
+-- ============================================
 -- GRANT PERMISSIONS (jeśli używasz ról)
 -- ============================================
 -- GRANT ALL ON ALL TABLES IN SCHEMA public TO dlamedica_app;
@@ -150,3 +168,4 @@ COMMENT ON TABLE cme_activities IS 'Katalog aktywności edukacyjnych (konferencj
 COMMENT ON TABLE user_cme_progress IS 'Śledzenie postępu CME użytkowników';
 COMMENT ON TABLE article_translations IS 'Tłumaczenia artykułów na inne języki';
 COMMENT ON TABLE feedback IS 'System zgłaszania błędów i sugestii';
+COMMENT ON TABLE push_subscriptions IS 'Subskrypcje Web Push dla powiadomień server-side';
