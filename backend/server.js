@@ -189,6 +189,8 @@ app.use('/api/newsletter', require('./routes/newsletter')); // 📧 Newsletter
 app.use('/api/events', require('./routes/events')); // 📅 Wydarzenia
 app.use('/api/feedback', require('./routes/feedback')); // 💬 Feedback i błędy
 app.use('/api/admin', require('./routes/admin')); // 👑 Admin panel
+app.use('/api/cme', require('./routes/cme')); // 🎓 Punkty edukacyjne CME
+app.use('/api/translations', require('./routes/translations')); // 🌍 Tłumaczenia
 
 // 🔒 BEZPIECZEŃSTWO: Bezpieczny health check
 const { secureHealthCheck, detailedHealthCheck } = require('./middleware/healthCheckSecurity');
