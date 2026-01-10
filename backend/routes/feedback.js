@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { validateApiKey } = require('../middleware/auth');
 
 /**
  * POST /api/feedback/error
@@ -24,8 +25,6 @@ router.post('/error', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id, created_at
     `, ['error', title || 'Błąd aplikacji', message, page_url, browser_info, error_stack, user_email, 'high']);
-
-    console.log(`🐛 Nowy błąd zgłoszony: ${title || 'Błąd'} (ID: ${result.rows[0].id})`);
 
     // Wywołaj webhook n8n do powiadomienia
     notifyN8n('error', result.rows[0].id, { title, message, page_url });
@@ -59,8 +58,6 @@ router.post('/suggestion', async (req, res) => {
       RETURNING id, created_at
     `, ['suggestion', title || 'Sugestia użytkownika', message, user_email, category || 'general']);
 
-    console.log(`💡 Nowa sugestia: ${title || 'Sugestia'} (ID: ${result.rows[0].id})`);
-
     // Wywołaj webhook n8n do powiadomienia
     notifyN8n('suggestion', result.rows[0].id, { title, message });
 
@@ -93,8 +90,6 @@ router.post('/contact', async (req, res) => {
       RETURNING id, created_at
     `, ['contact', subject || `Kontakt od ${name || email}`, message, email, name]);
 
-    console.log(`📬 Nowa wiadomość kontaktowa od: ${email} (ID: ${result.rows[0].id})`);
-
     // Wywołaj webhook n8n
     notifyN8n('contact', result.rows[0].id, { name, email, subject, message });
 
@@ -112,15 +107,8 @@ router.post('/contact', async (req, res) => {
  * GET /api/feedback/list
  * Pobierz listę feedbacku (dla admina, wymaga API key)
  */
-router.get('/list', async (req, res) => {
+router.get('/list', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const { type, status, limit = 50 } = req.query;
 
     let query = 'SELECT * FROM feedback WHERE 1=1';
@@ -157,15 +145,8 @@ router.get('/list', async (req, res) => {
  * PATCH /api/feedback/:id/status
  * Zmień status feedbacku (dla admina)
  */
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const { id } = req.params;
     const { status, admin_notes } = req.body;
 
@@ -214,7 +195,7 @@ async function notifyN8n(type, feedbackId, data) {
     });
   } catch (error) {
     // Nie blokuj głównego flow jeśli webhook nie działa
-    console.log('⚠️ n8n webhook notification failed:', error.message);
+    console.warn('n8n webhook notification failed:', error.message);
   }
 }
 

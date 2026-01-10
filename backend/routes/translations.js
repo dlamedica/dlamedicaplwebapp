@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, validateApiKey } = require('../middleware/auth');
 
 const SUPPORTED_LANGUAGES = ['en', 'uk', 'de']; // English, Ukrainian, German
 
@@ -123,14 +123,8 @@ router.post('/translate', authenticateToken, async (req, res) => {
  * POST /api/translations/save
  * Zapisz tłumaczenie (callback z n8n)
  */
-router.post('/save', async (req, res) => {
+router.post('/save', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
 
     const { article_id, language, title, content, excerpt, quality_score } = req.body;
 

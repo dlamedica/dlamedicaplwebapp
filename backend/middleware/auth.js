@@ -240,6 +240,26 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
+/**
+ * Walidacja API Key dla integracji n8n/zewnętrznych
+ * WYMAGA ustawienia N8N_API_KEY w .env (bez fallbacków!)
+ */
+const validateApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  const validKey = process.env.N8N_API_KEY;
+
+  if (!validKey) {
+    console.error('❌ N8N_API_KEY not configured in environment');
+    return res.status(503).json({ error: 'API key not configured' });
+  }
+
+  if (!apiKey || apiKey !== validKey) {
+    return res.status(401).json({ error: 'Invalid API key' });
+  }
+
+  next();
+};
+
 module.exports = {
   // Tokeny
   generateTokens,
@@ -252,6 +272,7 @@ module.exports = {
   requireRole,
   requirePremium,
   optionalAuth,
+  validateApiKey,
   // Stałe
   JWT_SECRET,
   JWT_EXPIRES_IN,

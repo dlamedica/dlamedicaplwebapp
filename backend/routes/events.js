@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, validateApiKey } = require('../middleware/auth');
 
 /**
  * GET /api/events - lista wydarzeń
@@ -115,15 +115,8 @@ router.post('/', async (req, res) => {
  * POST /api/events/seed - załaduj przykładowe wydarzenia
  * Endpoint do migracji danych z mockEvents
  */
-router.post('/seed', async (req, res) => {
+router.post('/seed', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const mockEvents = [
       {
         title: 'Kardiologia 2025: Nowe Horyzonty',

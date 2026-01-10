@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, requireRole, validateApiKey } = require('../middleware/auth');
 
 /**
  * GET /api/admin/stats
@@ -101,15 +101,8 @@ router.get('/stats', authenticateToken, requireRole(['admin']), async (req, res)
  * Szybkie statystyki (bez auth - do internal use)
  * Wymaga API key
  */
-router.get('/stats/quick', async (req, res) => {
+router.get('/stats/quick', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const result = await db.query(`
       SELECT
         (SELECT COUNT(*) FROM auth.users WHERE deleted_at IS NULL) as users,

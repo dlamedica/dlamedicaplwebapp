@@ -173,32 +173,6 @@ CREATE INDEX IF NOT EXISTS idx_user_interactions_action ON user_interactions(act
 CREATE INDEX IF NOT EXISTS idx_user_interactions_created ON user_interactions(created_at DESC);
 
 -- ============================================
--- 7. SCRAPED CONTENT (dane z konkurencji)
--- ============================================
-CREATE TABLE IF NOT EXISTS scraped_content (
-    id SERIAL PRIMARY KEY,
-    source VARCHAR(100) NOT NULL, -- 'mp.pl', 'termedia.pl', 'pulsmedycyny.pl'
-    content_type VARCHAR(50) NOT NULL, -- 'event', 'article', 'job'
-    title VARCHAR(500) NOT NULL,
-    description TEXT,
-    url VARCHAR(1000),
-    event_date DATE,
-    category VARCHAR(100),
-    metadata JSONB DEFAULT '{}',
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'published')),
-    published_as VARCHAR(20), -- 'article', 'event' - gdzie zostalo opublikowane
-    published_id INTEGER, -- ID w tabeli docelowej
-    reviewed_at TIMESTAMP WITH TIME ZONE,
-    reviewed_by INTEGER REFERENCES auth.users(id),
-    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_scraped_content_source ON scraped_content(source);
-CREATE INDEX IF NOT EXISTS idx_scraped_content_type ON scraped_content(content_type);
-CREATE INDEX IF NOT EXISTS idx_scraped_content_status ON scraped_content(status);
-CREATE INDEX IF NOT EXISTS idx_scraped_content_title ON scraped_content(title);
-
--- ============================================
 -- GRANT PERMISSIONS (jeśli używasz ról)
 -- ============================================
 -- GRANT ALL ON ALL TABLES IN SCHEMA public TO dlamedica_app;
@@ -215,4 +189,3 @@ COMMENT ON TABLE article_translations IS 'Tłumaczenia artykułów na inne języ
 COMMENT ON TABLE feedback IS 'System zgłaszania błędów i sugestii';
 COMMENT ON TABLE push_subscriptions IS 'Subskrypcje Web Push dla powiadomień server-side';
 COMMENT ON TABLE user_interactions IS 'Śledzenie interakcji użytkowników dla systemu rekomendacji AI';
-COMMENT ON TABLE scraped_content IS 'Zescrapowane dane z portali konkurencji (mp.pl, termedia.pl, etc.)';

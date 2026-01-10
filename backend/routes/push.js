@@ -73,8 +73,6 @@ router.post('/subscribe', optionalAuth, async (req, res) => {
       req.headers['user-agent']
     ]);
 
-    console.log(`Push subscription saved: ${result.rows[0].id}`);
-
     res.json({
       success: true,
       subscriptionId: result.rows[0].id
@@ -201,8 +199,6 @@ router.post('/send', authenticateToken, async (req, res) => {
 
     const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     const failed = results.filter(r => r.status === 'rejected' || !r.value?.success).length;
-
-    console.log(`Push sent: ${sent} success, ${failed} failed`);
 
     res.json({
       success: true,

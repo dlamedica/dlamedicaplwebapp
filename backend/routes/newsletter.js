@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, validateApiKey } = require('../middleware/auth');
 
 /**
  * POST /api/newsletter/subscribe
@@ -61,8 +61,6 @@ router.post('/subscribe', async (req, res) => {
       });
     }
 
-    console.log(`📧 Newsletter: ${existing ? 'Reaktywowano' : 'Nowa'} subskrypcja - ${email}`);
-
     res.json({
       success: true,
       message: 'Zapisano do newslettera',
@@ -98,8 +96,6 @@ router.post('/unsubscribe', async (req, res) => {
     if (!result) {
       return res.status(404).json({ error: 'Subskrypcja nie znaleziona' });
     }
-
-    console.log(`📧 Newsletter: Wypisano - ${email}`);
 
     res.json({
       success: true,
@@ -173,16 +169,8 @@ router.put('/preferences', authenticateToken, async (req, res) => {
  * Pobierz listę aktywnych subskrybentów (dla n8n)
  * Wymaga klucza API w headerze X-API-Key
  */
-router.get('/subscribers', async (req, res) => {
+router.get('/subscribers', validateApiKey, async (req, res) => {
   try {
-    // Prosty klucz API dla n8n
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const { preference, limit = 1000 } = req.query;
 
     let query = `
@@ -222,18 +210,10 @@ router.get('/subscribers', async (req, res) => {
  * POST /api/newsletter/webhook
  * Webhook dla n8n do raportowania wysłanych emaili
  */
-router.post('/webhook', async (req, res) => {
+router.post('/webhook', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
 
     const { event, email, campaign_id, timestamp } = req.body;
-
-    console.log(`📧 Newsletter webhook: ${event} for ${email} (campaign: ${campaign_id})`);
 
     // Tutaj można zapisać statystyki do bazy
     // await db.insert('newsletter_stats', { ... });
@@ -249,14 +229,8 @@ router.post('/webhook', async (req, res) => {
  * GET /api/newsletter/content
  * Pobierz najnowsze artykuły do newslettera (dla n8n)
  */
-router.get('/content', async (req, res) => {
+router.get('/content', validateApiKey, async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'];
-    const expectedKey = process.env.N8N_API_KEY || 'dlamedica-n8n-key-2025';
-
-    if (apiKey !== expectedKey) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
 
     const { limit = 10, category } = req.query;
 

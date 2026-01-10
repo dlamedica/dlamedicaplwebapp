@@ -195,8 +195,6 @@ router.post('/complete', authenticateToken, async (req, res) => {
       RETURNING *
     `, [userId, activity_id, points_earned, certificate_url, notes]);
 
-    console.log(`🎓 CME: User ${userId} earned ${points_earned} points`);
-
     res.json({
       success: true,
       message: 'Aktywność zarejestrowana',

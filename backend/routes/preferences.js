@@ -80,8 +80,6 @@ router.put('/', authenticateToken, async (req, res) => {
       RETURNING *
     `, [userId, dark_mode, high_contrast, font_size, language, notifications_enabled, email_notifications, sound_enabled]);
 
-    console.log(`⚙️ Preferences updated for user ${userId}`);
-
     res.json({
       success: true,
       preferences: result.rows[0]
@@ -142,8 +140,6 @@ router.patch('/', authenticateToken, async (req, res) => {
         RETURNING *
       `, [value, userId]);
     }
-
-    console.log(`⚙️ Preference ${key}=${value} for user ${userId}`);
 
     res.json({
       success: true,
