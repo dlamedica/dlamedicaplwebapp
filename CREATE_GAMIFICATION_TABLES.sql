@@ -450,3 +450,205 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ===================================
+-- ROZSZERZENIE: STREAK, ODZNAKI, LIGI EDUKACYJNE
+-- Data: 2026-01-10
+-- ===================================
+
+-- 11. TABELA BADGES (odznaki)
+CREATE TABLE IF NOT EXISTS badges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    icon VARCHAR(50) NOT NULL,
+    color VARCHAR(20) DEFAULT '#3498db',
+    category VARCHAR(30) NOT NULL CHECK (category IN ('streak', 'quiz', 'course', 'social', 'special', 'veterinary', 'medical')),
+    rarity VARCHAR(20) DEFAULT 'common' CHECK (rarity IN ('common', 'uncommon', 'rare', 'epic', 'legendary')),
+    xp_reward INTEGER DEFAULT 0,
+    requirement_type VARCHAR(30), -- 'count', 'streak', 'score', 'time', 'special'
+    requirement_value INTEGER,
+    is_hidden BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true
+);
+
+CREATE INDEX IF NOT EXISTS idx_badges_category ON badges(category);
+CREATE INDEX IF NOT EXISTS idx_badges_rarity ON badges(rarity);
+
+-- 12. TABELA USER_BADGES (zdobyte odznaki)
+CREATE TABLE IF NOT EXISTS user_badges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    badge_id UUID REFERENCES badges(id) ON DELETE CASCADE NOT NULL,
+    earned_at TIMESTAMPTZ DEFAULT NOW(),
+    progress INTEGER DEFAULT 0,
+    is_featured BOOLEAN DEFAULT false,
+    notified BOOLEAN DEFAULT false,
+
+    UNIQUE(user_id, badge_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_badges_user ON user_badges(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_badges_badge ON user_badges(badge_id);
+
+-- 13. TABELA EDUCATION_LEAGUES (ligi edukacyjne)
+CREATE TABLE IF NOT EXISTS education_leagues (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    name VARCHAR(50) NOT NULL UNIQUE,
+    rank_order INTEGER NOT NULL,
+    icon VARCHAR(50),
+    color VARCHAR(20),
+    min_weekly_xp INTEGER DEFAULT 0,
+    promotion_spots INTEGER DEFAULT 10,
+    relegation_spots INTEGER DEFAULT 5
+);
+
+-- Seed lig
+INSERT INTO education_leagues (name, rank_order, icon, color, min_weekly_xp, promotion_spots, relegation_spots) VALUES
+('bronze', 1, 'medal', '#cd7f32', 0, 15, 0),
+('silver', 2, 'medal', '#c0c0c0', 100, 10, 5),
+('gold', 3, 'medal', '#ffd700', 300, 10, 5),
+('platinum', 4, 'gem', '#e5e4e2', 600, 10, 5),
+('diamond', 5, 'diamond', '#b9f2ff', 1000, 5, 5),
+('master', 6, 'crown', '#ff4500', 2000, 0, 5)
+ON CONFLICT (name) DO NOTHING;
+
+-- 14. TABELA USER_LEAGUE_HISTORY
+CREATE TABLE IF NOT EXISTS user_league_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    week_start DATE NOT NULL,
+    week_end DATE NOT NULL,
+    league VARCHAR(20) NOT NULL,
+    final_position INTEGER,
+    xp_earned INTEGER DEFAULT 0,
+    promoted BOOLEAN DEFAULT false,
+    relegated BOOLEAN DEFAULT false,
+
+    UNIQUE(user_id, week_start)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_league_history_user ON user_league_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_league_history_week ON user_league_history(week_start);
+
+-- 15. TABELA DAILY_STUDY_CHALLENGES (codzienne wyzwania nauki)
+CREATE TABLE IF NOT EXISTS daily_study_challenges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    date DATE NOT NULL UNIQUE,
+    challenge_type VARCHAR(30) NOT NULL CHECK (challenge_type IN ('flashcard', 'quiz', 'time', 'article', 'mixed')),
+    title VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    target_value INTEGER NOT NULL,
+    xp_reward INTEGER NOT NULL,
+    bonus_multiplier DECIMAL(3,2) DEFAULT 1.00
+);
+
+-- 16. TABELA USER_STUDY_CHALLENGES (postęp w wyzwaniach)
+CREATE TABLE IF NOT EXISTS user_study_challenges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    challenge_id UUID REFERENCES daily_study_challenges(id) ON DELETE CASCADE NOT NULL,
+    current_value INTEGER DEFAULT 0,
+    completed BOOLEAN DEFAULT false,
+    completed_at TIMESTAMPTZ,
+
+    UNIQUE(user_id, challenge_id)
+);
+
+-- 17. ROZSZERZENIE user_points o pola edukacyjne
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS current_streak INTEGER DEFAULT 0;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS longest_streak INTEGER DEFAULT 0;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS last_study_date DATE;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS streak_freeze_count INTEGER DEFAULT 1;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS current_league VARCHAR(20) DEFAULT 'bronze';
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS weekly_xp INTEGER DEFAULT 0;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS total_flashcards_reviewed INTEGER DEFAULT 0;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS total_quizzes_completed INTEGER DEFAULT 0;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS total_courses_completed INTEGER DEFAULT 0;
+ALTER TABLE user_points ADD COLUMN IF NOT EXISTS total_study_minutes INTEGER DEFAULT 0;
+
+-- Seed odznak
+INSERT INTO badges (code, name, description, icon, color, category, rarity, xp_reward, requirement_type, requirement_value) VALUES
+-- Streak badges
+('streak_3', 'Początek serii', 'Ucz się 3 dni z rzędu', 'fire', '#e74c3c', 'streak', 'common', 10, 'streak', 3),
+('streak_7', 'Tydzień nauki', 'Ucz się 7 dni z rzędu', 'fire', '#e67e22', 'streak', 'uncommon', 25, 'streak', 7),
+('streak_14', 'Dwa tygodnie', 'Ucz się 14 dni z rzędu', 'fire', '#f39c12', 'streak', 'rare', 50, 'streak', 14),
+('streak_30', 'Miesiąc wytrwałości', 'Ucz się 30 dni z rzędu', 'fire', '#f1c40f', 'streak', 'epic', 100, 'streak', 30),
+('streak_100', 'Legendarny streak', 'Ucz się 100 dni z rzędu', 'fire', '#9b59b6', 'streak', 'legendary', 500, 'streak', 100),
+
+-- Quiz badges
+('quiz_first', 'Pierwszy quiz', 'Ukończ swój pierwszy quiz', 'check-circle', '#27ae60', 'quiz', 'common', 5, 'count', 1),
+('quiz_10', 'Quiz adept', 'Ukończ 10 quizów', 'clipboard-check', '#2ecc71', 'quiz', 'uncommon', 25, 'count', 10),
+('quiz_50', 'Quiz mistrz', 'Ukończ 50 quizów', 'award', '#1abc9c', 'quiz', 'rare', 75, 'count', 50),
+('quiz_perfect', 'Perfekcjonista', 'Zdobądź 100% w quizie', 'star', '#f1c40f', 'quiz', 'uncommon', 30, 'score', 100),
+('quiz_speed', 'Błyskawica', 'Ukończ quiz w mniej niż 2 minuty', 'bolt', '#e74c3c', 'quiz', 'rare', 40, 'time', 120),
+
+-- Flashcard badges
+('flashcard_100', 'Fiszkowicz', 'Przeglądnij 100 fiszek', 'layer-group', '#3498db', 'course', 'common', 15, 'count', 100),
+('flashcard_500', 'Kartkomania', 'Przeglądnij 500 fiszek', 'layer-group', '#2980b9', 'course', 'uncommon', 40, 'count', 500),
+('flashcard_1000', 'Mistrz fiszek', 'Przeglądnij 1000 fiszek', 'layer-group', '#1abc9c', 'course', 'rare', 100, 'count', 1000),
+
+-- Course badges
+('course_first', 'Pierwszy krok', 'Ukończ pierwszy kurs', 'graduation-cap', '#9b59b6', 'course', 'common', 20, 'count', 1),
+('course_5', 'Pilny student', 'Ukończ 5 kursów', 'book-reader', '#8e44ad', 'course', 'uncommon', 50, 'count', 5),
+('course_10', 'Wieczny student', 'Ukończ 10 kursów', 'university', '#6c3483', 'course', 'rare', 100, 'count', 10),
+
+-- Veterinary specific badges
+('vet_first', 'Przyjaciel zwierząt', 'Ukończ pierwszy kurs weterynaryjny', 'paw', '#27ae60', 'veterinary', 'common', 15, 'count', 1),
+('vet_small', 'Spec. małych zwierząt', 'Ukończ 5 kursów o małych zwierzętach', 'cat', '#3498db', 'veterinary', 'uncommon', 40, 'count', 5),
+('vet_large', 'Spec. dużych zwierząt', 'Ukończ 5 kursów o dużych zwierzętach', 'horse', '#e67e22', 'veterinary', 'uncommon', 40, 'count', 5),
+('vet_exotic', 'Egzotyk', 'Ukończ kurs o zwierzętach egzotycznych', 'dragon', '#9b59b6', 'veterinary', 'rare', 50, 'count', 1),
+('vet_master', 'Mistrz weterynarii', 'Zdobądź wszystkie odznaki weterynaryjne', 'medal', '#f1c40f', 'veterinary', 'legendary', 200, 'special', 0),
+
+-- Medical badges
+('med_anatomy', 'Anatom', 'Opanuj 80% materiału z anatomii', 'bone', '#e74c3c', 'medical', 'uncommon', 35, 'score', 80),
+('med_pharma', 'Farmakolog', 'Ukończ wszystkie kursy farmakologii', 'pills', '#9b59b6', 'medical', 'rare', 60, 'count', 1),
+('med_cardio', 'Kardiolog', 'Opanuj materiał z kardiologii', 'heartbeat', '#e74c3c', 'medical', 'rare', 60, 'score', 80),
+('med_lek', 'Zdany LEK', 'Zdaj egzamin próbny LEK na 70%+', 'certificate', '#f1c40f', 'medical', 'epic', 150, 'score', 70),
+
+-- Social badges
+('social_share', 'Społecznik', 'Udostępnij swój postęp', 'share-alt', '#00acee', 'social', 'common', 10, 'count', 1),
+('social_mentor', 'Mentor', 'Pomóż 5 innym użytkownikom', 'hands-helping', '#e91e63', 'social', 'rare', 75, 'count', 5),
+
+-- Special badges
+('early_bird', 'Ranny ptaszek', 'Ucz się przed 7:00 rano', 'sun', '#f39c12', 'special', 'uncommon', 20, 'special', 0),
+('night_owl', 'Nocna sowa', 'Ucz się po 23:00', 'moon', '#34495e', 'special', 'uncommon', 20, 'special', 0),
+('weekend_warrior', 'Weekendowy wojownik', 'Ucz się w sobotę i niedzielę', 'calendar-week', '#e74c3c', 'special', 'common', 15, 'special', 0),
+('comeback', 'Powrót bohatera', 'Wróć po 30 dniach przerwy', 'undo', '#2ecc71', 'special', 'rare', 50, 'special', 30)
+ON CONFLICT (code) DO NOTHING;
+
+-- Seed codziennych wyzwań
+INSERT INTO daily_study_challenges (date, challenge_type, title, description, target_value, xp_reward, bonus_multiplier) VALUES
+(CURRENT_DATE, 'flashcard', 'Fiszki dnia', 'Przejrzyj 20 fiszek', 20, 30, 1.5),
+(CURRENT_DATE + 1, 'quiz', 'Quiz blitz', 'Ukończ 3 quizy', 3, 40, 1.2),
+(CURRENT_DATE + 2, 'time', 'Maraton nauki', 'Ucz się przez 30 minut', 30, 50, 1.3),
+(CURRENT_DATE + 3, 'article', 'Czytelnik', 'Przeczytaj 5 artykułów', 5, 35, 1.2),
+(CURRENT_DATE + 4, 'mixed', 'Wszechstronność', '10 fiszek + 1 quiz', 11, 45, 1.4)
+ON CONFLICT (date) DO NOTHING;
+
+-- RLS dla nowych tabel
+ALTER TABLE badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE education_leagues ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_league_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_study_challenges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_study_challenges ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view badges" ON badges FOR SELECT USING (is_active = true);
+CREATE POLICY "Users can view own badges" ON user_badges FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Anyone can view leagues" ON education_leagues FOR SELECT USING (true);
+CREATE POLICY "Users can view own league history" ON user_league_history FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Anyone can view challenges" ON daily_study_challenges FOR SELECT USING (true);
+CREATE POLICY "Users can view own challenge progress" ON user_study_challenges FOR SELECT USING (auth.uid() = user_id);
+

@@ -26,7 +26,7 @@ export interface Ebook {
   updatedAt?: string;
 }
 
-export type EbookCategory = 
+export type EbookCategory =
   | 'anatomia'
   | 'fizjologia'
   | 'patologia'
@@ -60,6 +60,17 @@ export type EbookCategory =
   | 'bioetyka'
   | 'prawo_medyczne'
   | 'historia_medycyny'
+  // Weterynaria
+  | 'weterynaria_ogolna'
+  | 'weterynaria_male_zwierzeta'
+  | 'weterynaria_duze_zwierzeta'
+  | 'weterynaria_egzotyczne'
+  | 'chirurgia_weterynaryjna'
+  | 'farmakologia_weterynaryjna'
+  | 'diagnostyka_weterynaryjna'
+  | 'rozrod_zwierzat'
+  | 'zywienie_zwierzat'
+  | 'choroby_zakazne_zwierzat'
   | 'inny';
 
 export interface EbookCategoryInfo {
@@ -103,6 +114,17 @@ export const EBOOK_CATEGORIES: Record<EbookCategory, EbookCategoryInfo> = {
   bioetyka: { id: 'bioetyka', name: 'Bioetyka', iconKey: 'bioetyka', description: 'Etyka w medycynie' },
   prawo_medyczne: { id: 'prawo_medyczne', name: 'Prawo medyczne', iconKey: 'prawo_medyczne', description: 'Aspekty prawne medycyny' },
   historia_medycyny: { id: 'historia_medycyny', name: 'Historia medycyny', iconKey: 'historia_medycyny', description: 'Dzieje medycyny' },
+  // Weterynaria
+  weterynaria_ogolna: { id: 'weterynaria_ogolna', name: 'Weterynaria ogólna', iconKey: 'weterynaria', description: 'Podstawy medycyny weterynaryjnej' },
+  weterynaria_male_zwierzeta: { id: 'weterynaria_male_zwierzeta', name: 'Małe zwierzęta', iconKey: 'weterynaria', description: 'Psy, koty, gryzonie' },
+  weterynaria_duze_zwierzeta: { id: 'weterynaria_duze_zwierzeta', name: 'Duże zwierzęta', iconKey: 'weterynaria', description: 'Konie, bydło, świnie' },
+  weterynaria_egzotyczne: { id: 'weterynaria_egzotyczne', name: 'Zwierzęta egzotyczne', iconKey: 'weterynaria', description: 'Gady, ptaki, egzotyki' },
+  chirurgia_weterynaryjna: { id: 'chirurgia_weterynaryjna', name: 'Chirurgia weterynaryjna', iconKey: 'chirurgia', description: 'Zabiegi chirurgiczne u zwierząt' },
+  farmakologia_weterynaryjna: { id: 'farmakologia_weterynaryjna', name: 'Farmakologia weterynaryjna', iconKey: 'farmakologia', description: 'Leki dla zwierząt' },
+  diagnostyka_weterynaryjna: { id: 'diagnostyka_weterynaryjna', name: 'Diagnostyka weterynaryjna', iconKey: 'diagnostyka', description: 'Badania diagnostyczne zwierząt' },
+  rozrod_zwierzat: { id: 'rozrod_zwierzat', name: 'Rozród zwierząt', iconKey: 'weterynaria', description: 'Rozmnażanie i położnictwo weterynaryjne' },
+  zywienie_zwierzat: { id: 'zywienie_zwierzat', name: 'Żywienie zwierząt', iconKey: 'dietetyka', description: 'Dietetyka i żywienie zwierząt' },
+  choroby_zakazne_zwierzat: { id: 'choroby_zakazne_zwierzat', name: 'Choroby zakaźne zwierząt', iconKey: 'weterynaria', description: 'Epidemiologia weterynaryjna' },
   inny: { id: 'inny', name: 'Inne', iconKey: 'inny', description: 'Inne dziedziny' },
 };
 

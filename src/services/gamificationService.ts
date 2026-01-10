@@ -1196,3 +1196,585 @@ export async function generatePersonalizedOffers(userId: string): Promise<any[]>
   }
 }
 
+// ===================================
+// SYSTEM EDUKACYJNY - STREAK, ODZNAKI, LIGI
+// ===================================
+
+export interface Badge {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  category: 'streak' | 'quiz' | 'course' | 'social' | 'special' | 'veterinary' | 'medical';
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  xp_reward: number;
+  requirement_type: string;
+  requirement_value: number;
+  is_hidden: boolean;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+  progress: number;
+  is_featured: boolean;
+  badge?: Badge;
+}
+
+export interface StudyStreak {
+  current_streak: number;
+  longest_streak: number;
+  last_study_date: string | null;
+  streak_freeze_count: number;
+  is_streak_at_risk: boolean;
+}
+
+export interface LeagueInfo {
+  name: string;
+  rank: number;
+  icon: string;
+  color: string;
+  weekly_xp: number;
+  position_in_league: number;
+  users_in_league: number;
+  promotion_zone: boolean;
+  relegation_zone: boolean;
+}
+
+export interface DailyChallenge {
+  id: string;
+  date: string;
+  challenge_type: string;
+  title: string;
+  description: string;
+  target_value: number;
+  current_value: number;
+  xp_reward: number;
+  bonus_multiplier: number;
+  completed: boolean;
+}
+
+// XP za różne akcje edukacyjne
+export const EDUCATION_XP_REWARDS = {
+  flashcard_review: 2,
+  flashcard_correct: 3,
+  quiz_complete: 10,
+  quiz_perfect: 25,
+  course_lesson: 15,
+  course_complete: 100,
+  article_read: 5,
+  daily_goal: 20,
+  streak_bonus_7: 50,
+  streak_bonus_30: 200,
+  badge_earned: 10,
+};
+
+/**
+ * Rejestruje aktywność nauki i aktualizuje streak
+ */
+export async function recordStudyActivity(
+  userId: string,
+  activityType: keyof typeof EDUCATION_XP_REWARDS,
+  metadata?: Record<string, any>
+): Promise<{ xp_earned: number; streak_updated: boolean; badges_earned: Badge[] }> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const xpAmount = EDUCATION_XP_REWARDS[activityType] || 5;
+    const badgesEarned: Badge[] = [];
+
+    // Pobierz dane użytkownika
+    const userPoints = await ensureUserPoints(userId);
+
+    // Sprawdź i zaktualizuj streak
+    const lastStudyDate = (userPoints as any).last_study_date;
+    let currentStreak = (userPoints as any).current_streak || 0;
+    let longestStreak = (userPoints as any).longest_streak || 0;
+    let streakUpdated = false;
+
+    if (lastStudyDate !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      if (lastStudyDate === yesterdayStr) {
+        // Kontynuacja streaka
+        currentStreak += 1;
+        streakUpdated = true;
+      } else if (!lastStudyDate) {
+        // Pierwszy dzień
+        currentStreak = 1;
+        streakUpdated = true;
+      } else {
+        // Przerwany streak (chyba że ma freeze)
+        const freezeCount = (userPoints as any).streak_freeze_count || 0;
+        if (freezeCount > 0) {
+          // Użyj freeze
+          await db
+            .from('user_points')
+            .update({ streak_freeze_count: freezeCount - 1 })
+            .eq('user_id', userId);
+        } else {
+          currentStreak = 1;
+        }
+        streakUpdated = true;
+      }
+
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
+      }
+
+      // Aktualizuj streak w bazie
+      await db
+        .from('user_points')
+        .update({
+          current_streak: currentStreak,
+          longest_streak: longestStreak,
+          last_study_date: today,
+        })
+        .eq('user_id', userId);
+
+      // Sprawdź odznaki za streak
+      const streakBadges = await checkStreakBadges(userId, currentStreak);
+      badgesEarned.push(...streakBadges);
+    }
+
+    // Dodaj XP
+    await addExperience(userId, xpAmount);
+
+    // Aktualizuj weekly_xp
+    await db
+      .from('user_points')
+      .update({
+        weekly_xp: ((userPoints as any).weekly_xp || 0) + xpAmount,
+      })
+      .eq('user_id', userId);
+
+    // Aktualizuj statystyki na podstawie typu aktywności
+    if (activityType.startsWith('flashcard')) {
+      await db
+        .from('user_points')
+        .update({
+          total_flashcards_reviewed: ((userPoints as any).total_flashcards_reviewed || 0) + 1,
+        })
+        .eq('user_id', userId);
+    } else if (activityType.startsWith('quiz')) {
+      await db
+        .from('user_points')
+        .update({
+          total_quizzes_completed: ((userPoints as any).total_quizzes_completed || 0) + 1,
+        })
+        .eq('user_id', userId);
+    } else if (activityType === 'course_complete') {
+      await db
+        .from('user_points')
+        .update({
+          total_courses_completed: ((userPoints as any).total_courses_completed || 0) + 1,
+        })
+        .eq('user_id', userId);
+    }
+
+    return { xp_earned: xpAmount, streak_updated: streakUpdated, badges_earned: badgesEarned };
+  } catch (error) {
+    console.error('Błąd podczas rejestrowania aktywności:', error);
+    return { xp_earned: 0, streak_updated: false, badges_earned: [] };
+  }
+}
+
+/**
+ * Sprawdza i przyznaje odznaki za streak
+ */
+async function checkStreakBadges(userId: string, currentStreak: number): Promise<Badge[]> {
+  const earnedBadges: Badge[] = [];
+
+  try {
+    const streakMilestones = [
+      { streak: 3, code: 'streak_3' },
+      { streak: 7, code: 'streak_7' },
+      { streak: 14, code: 'streak_14' },
+      { streak: 30, code: 'streak_30' },
+      { streak: 100, code: 'streak_100' },
+    ];
+
+    for (const milestone of streakMilestones) {
+      if (currentStreak >= milestone.streak) {
+        const badge = await awardBadge(userId, milestone.code);
+        if (badge) {
+          earnedBadges.push(badge);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Błąd podczas sprawdzania odznak za streak:', error);
+  }
+
+  return earnedBadges;
+}
+
+/**
+ * Przyznaje odznakę użytkownikowi
+ */
+export async function awardBadge(userId: string, badgeCode: string): Promise<Badge | null> {
+  try {
+    // Sprawdź czy odznaka istnieje
+    const { data: badge, error: badgeError } = await db
+      .from('badges')
+      .select('*')
+      .eq('code', badgeCode)
+      .eq('is_active', true)
+      .single();
+
+    if (badgeError || !badge) {
+      return null;
+    }
+
+    // Sprawdź czy użytkownik już ma tę odznakę
+    const { data: existingBadge } = await db
+      .from('user_badges')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('badge_id', badge.id)
+      .single();
+
+    if (existingBadge) {
+      return null; // Już posiada
+    }
+
+    // Przyznaj odznakę
+    await db.from('user_badges').insert({
+      user_id: userId,
+      badge_id: badge.id,
+      earned_at: new Date().toISOString(),
+    });
+
+    // Dodaj XP za zdobycie odznaki
+    if (badge.xp_reward > 0) {
+      await addExperience(userId, badge.xp_reward);
+    }
+
+    return badge as Badge;
+  } catch (error) {
+    console.error('Błąd podczas przyznawania odznaki:', error);
+    return null;
+  }
+}
+
+/**
+ * Pobiera wszystkie odznaki użytkownika
+ */
+export async function getUserBadges(userId: string): Promise<UserBadge[]> {
+  try {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+      return [
+        {
+          id: '1',
+          user_id: userId,
+          badge_id: '1',
+          earned_at: new Date().toISOString(),
+          progress: 100,
+          is_featured: true,
+          badge: {
+            id: '1',
+            code: 'streak_7',
+            name: 'Tydzień nauki',
+            description: 'Ucz się 7 dni z rzędu',
+            icon: 'fire',
+            color: '#e67e22',
+            category: 'streak',
+            rarity: 'uncommon',
+            xp_reward: 25,
+            requirement_type: 'streak',
+            requirement_value: 7,
+            is_hidden: false,
+          },
+        },
+      ];
+    }
+
+    const { data, error } = await db
+      .from('user_badges')
+      .select('*, badge:badges(*)')
+      .eq('user_id', userId)
+      .order('earned_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []) as UserBadge[];
+  } catch (error) {
+    console.error('Błąd podczas pobierania odznak użytkownika:', error);
+    return [];
+  }
+}
+
+/**
+ * Pobiera wszystkie dostępne odznaki
+ */
+export async function getAllBadges(): Promise<Badge[]> {
+  try {
+    const { data, error } = await db
+      .from('badges')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_hidden', false)
+      .order('category', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []) as Badge[];
+  } catch (error) {
+    console.error('Błąd podczas pobierania odznak:', error);
+    return [];
+  }
+}
+
+/**
+ * Pobiera informacje o streak użytkownika
+ */
+export async function getStudyStreak(userId: string): Promise<StudyStreak> {
+  try {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+      return {
+        current_streak: 12,
+        longest_streak: 25,
+        last_study_date: new Date().toISOString().split('T')[0],
+        streak_freeze_count: 2,
+        is_streak_at_risk: false,
+      };
+    }
+
+    const userPoints = await ensureUserPoints(userId);
+    const today = new Date().toISOString().split('T')[0];
+    const lastStudyDate = (userPoints as any).last_study_date;
+
+    // Sprawdź czy streak jest zagrożony (nie uczył się dziś)
+    const isAtRisk = lastStudyDate !== today;
+
+    return {
+      current_streak: (userPoints as any).current_streak || 0,
+      longest_streak: (userPoints as any).longest_streak || 0,
+      last_study_date: lastStudyDate,
+      streak_freeze_count: (userPoints as any).streak_freeze_count || 0,
+      is_streak_at_risk: isAtRisk && ((userPoints as any).current_streak || 0) > 0,
+    };
+  } catch (error) {
+    console.error('Błąd podczas pobierania streak:', error);
+    return {
+      current_streak: 0,
+      longest_streak: 0,
+      last_study_date: null,
+      streak_freeze_count: 0,
+      is_streak_at_risk: false,
+    };
+  }
+}
+
+/**
+ * Pobiera informacje o lidze użytkownika
+ */
+export async function getLeagueInfo(userId: string): Promise<LeagueInfo> {
+  try {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+      return {
+        name: 'gold',
+        rank: 3,
+        icon: 'medal',
+        color: '#ffd700',
+        weekly_xp: 450,
+        position_in_league: 7,
+        users_in_league: 50,
+        promotion_zone: true,
+        relegation_zone: false,
+      };
+    }
+
+    const userPoints = await ensureUserPoints(userId);
+    const currentLeague = (userPoints as any).current_league || 'bronze';
+    const weeklyXp = (userPoints as any).weekly_xp || 0;
+
+    // Pobierz info o lidze
+    const { data: league } = await db
+      .from('education_leagues')
+      .select('*')
+      .eq('name', currentLeague)
+      .single();
+
+    // Policz pozycję w lidze
+    const { count: higherCount } = await db
+      .from('user_points')
+      .select('*', { count: 'exact' })
+      .eq('current_league', currentLeague)
+      .gt('weekly_xp', weeklyXp);
+
+    const { count: totalInLeague } = await db
+      .from('user_points')
+      .select('*', { count: 'exact' })
+      .eq('current_league', currentLeague);
+
+    const position = (higherCount || 0) + 1;
+    const promotionSpots = league?.promotion_spots || 10;
+    const relegationSpots = league?.relegation_spots || 5;
+    const total = totalInLeague || 1;
+
+    return {
+      name: currentLeague,
+      rank: league?.rank_order || 1,
+      icon: league?.icon || 'medal',
+      color: league?.color || '#cd7f32',
+      weekly_xp: weeklyXp,
+      position_in_league: position,
+      users_in_league: total,
+      promotion_zone: position <= promotionSpots,
+      relegation_zone: position > total - relegationSpots,
+    };
+  } catch (error) {
+    console.error('Błąd podczas pobierania info o lidze:', error);
+    return {
+      name: 'bronze',
+      rank: 1,
+      icon: 'medal',
+      color: '#cd7f32',
+      weekly_xp: 0,
+      position_in_league: 1,
+      users_in_league: 1,
+      promotion_zone: false,
+      relegation_zone: false,
+    };
+  }
+}
+
+/**
+ * Pobiera ranking ligi
+ */
+export async function getLeagueLeaderboard(
+  league: string,
+  limit: number = 20
+): Promise<Array<{ user_id: string; name: string; weekly_xp: number; position: number }>> {
+  try {
+    const { data, error } = await db
+      .from('user_points')
+      .select('user_id, weekly_xp')
+      .eq('current_league', league)
+      .order('weekly_xp', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return (data || []).map((row, index) => ({
+      user_id: row.user_id,
+      name: `Użytkownik ${index + 1}`, // W rzeczywistości pobierz z tabeli users
+      weekly_xp: row.weekly_xp,
+      position: index + 1,
+    }));
+  } catch (error) {
+    console.error('Błąd podczas pobierania rankingu:', error);
+    return [];
+  }
+}
+
+/**
+ * Pobiera dzisiejsze wyzwanie
+ */
+export async function getDailyChallenge(userId: string): Promise<DailyChallenge | null> {
+  try {
+    if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+      return {
+        id: '1',
+        date: new Date().toISOString().split('T')[0],
+        challenge_type: 'flashcard',
+        title: 'Fiszki dnia',
+        description: 'Przejrzyj 20 fiszek',
+        target_value: 20,
+        current_value: 8,
+        xp_reward: 30,
+        bonus_multiplier: 1.5,
+        completed: false,
+      };
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Pobierz wyzwanie
+    const { data: challenge } = await db
+      .from('daily_study_challenges')
+      .select('*')
+      .eq('date', today)
+      .single();
+
+    if (!challenge) return null;
+
+    // Pobierz postęp użytkownika
+    const { data: progress } = await db
+      .from('user_study_challenges')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('challenge_id', challenge.id)
+      .single();
+
+    return {
+      id: challenge.id,
+      date: challenge.date,
+      challenge_type: challenge.challenge_type,
+      title: challenge.title,
+      description: challenge.description,
+      target_value: challenge.target_value,
+      current_value: progress?.current_value || 0,
+      xp_reward: challenge.xp_reward,
+      bonus_multiplier: challenge.bonus_multiplier,
+      completed: progress?.completed || false,
+    };
+  } catch (error) {
+    console.error('Błąd podczas pobierania wyzwania:', error);
+    return null;
+  }
+}
+
+/**
+ * Aktualizuje postęp w dziennym wyzwaniu
+ */
+export async function updateDailyChallengeProgress(
+  userId: string,
+  challengeType: string,
+  increment: number = 1
+): Promise<{ completed: boolean; xp_earned: number }> {
+  try {
+    const challenge = await getDailyChallenge(userId);
+
+    if (!challenge || challenge.challenge_type !== challengeType) {
+      return { completed: false, xp_earned: 0 };
+    }
+
+    if (challenge.completed) {
+      return { completed: true, xp_earned: 0 };
+    }
+
+    const newValue = challenge.current_value + increment;
+    const completed = newValue >= challenge.target_value;
+
+    // Aktualizuj postęp
+    await db.from('user_study_challenges').upsert(
+      {
+        user_id: userId,
+        challenge_id: challenge.id,
+        current_value: Math.min(newValue, challenge.target_value),
+        completed,
+        completed_at: completed ? new Date().toISOString() : null,
+      },
+      { onConflict: 'user_id,challenge_id' }
+    );
+
+    let xpEarned = 0;
+    if (completed) {
+      xpEarned = Math.round(challenge.xp_reward * challenge.bonus_multiplier);
+      await addExperience(userId, xpEarned);
+    }
+
+    return { completed, xp_earned: xpEarned };
+  } catch (error) {
+    console.error('Błąd podczas aktualizacji wyzwania:', error);
+    return { completed: false, xp_earned: 0 };
+  }
+}
+

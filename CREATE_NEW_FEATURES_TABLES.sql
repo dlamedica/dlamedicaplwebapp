@@ -86,7 +86,11 @@ INSERT INTO cme_requirements (profession, points_required, period_years, descrip
 ('pielegniarka', 200, 5, 'Pielęgniarka - wymóg 200 punktów na 5 lat'),
 ('polozna', 200, 5, 'Położna - wymóg 200 punktów na 5 lat'),
 ('farmaceuta', 100, 5, 'Farmaceuta - wymóg 100 punktów na 5 lat'),
-('diagnosta', 100, 5, 'Diagnosta laboratoryjny - wymóg 100 punktów na 5 lat')
+('diagnosta', 100, 5, 'Diagnosta laboratoryjny - wymóg 100 punktów na 5 lat'),
+('lekarz_weterynarii', 150, 5, 'Lekarz weterynarii - wymóg 150 punktów edukacyjnych na 5 lat'),
+('technik_weterynarii', 80, 5, 'Technik weterynarii - wymóg 80 punktów na 5 lat'),
+('fizjoterapeuta', 120, 4, 'Fizjoterapeuta - wymóg 120 punktów na 4 lata'),
+('ratownik_medyczny', 100, 5, 'Ratownik medyczny - wymóg 100 punktów na 5 lat')
 ON CONFLICT (profession) DO NOTHING;
 
 -- ============================================
