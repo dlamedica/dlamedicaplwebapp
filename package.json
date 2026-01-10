@@ -36,6 +36,7 @@
     "fuse.js": "^7.1.0",
     "jspdf": "^3.0.1",
     "leaflet": "^1.9.4",
+    "lottie-web": "^5.13.0",
     "lucide-react": "^0.533.0",
     "node-fetch": "^3.3.2",
     "papaparse": "^5.5.3",
