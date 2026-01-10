@@ -194,6 +194,7 @@ app.use('/api/translations', require('./routes/translations')); // 🌍 Tłumacz
 app.use('/api/preferences', require('./routes/preferences')); // ⚙️ Preferencje użytkownika
 app.use('/api/push', require('./routes/push')); // Push notifications
 app.use('/api/recommendations', require('./routes/recommendations')); // AI Rekomendacje
+app.use('/api/scraper', require('./routes/scraper')); // Scraping konkurencji
 
 // 🔒 BEZPIECZEŃSTWO: Bezpieczny health check
 const { secureHealthCheck, detailedHealthCheck } = require('./middleware/healthCheckSecurity');
