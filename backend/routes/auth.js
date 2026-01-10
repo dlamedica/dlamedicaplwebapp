@@ -656,9 +656,22 @@ router.post('/forgot-password', [
       [resetToken, result.rows[0].id]
     );
 
-    // TODO: Wysłij email z linkiem resetowania
-    // W produkcji użyj serwisu email (SendGrid, Mailgun, etc.)
-    console.log(`📧 Reset token dla ${email}: ${resetToken}`);
+    // Wyślij email przez n8n webhook
+    try {
+      const n8nWebhookUrl = process.env.N8N_PASSWORD_RESET_WEBHOOK || 'https://dlamedica.app.n8n.cloud/webhook/password-reset';
+      await fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          token: resetToken
+        })
+      });
+      console.log(`📧 Reset email wysłany do: ${email}`);
+    } catch (emailError) {
+      console.error('⚠️ Błąd wysyłki emaila reset:', emailError.message);
+      // Nie blokuj - użytkownik i tak dostanie komunikat sukcesu
+    }
 
     res.json({ 
       message: 'Jeśli konto istnieje, email z instrukcjami został wysłany',

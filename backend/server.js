@@ -188,6 +188,7 @@ app.use('/api/articles', require('./routes/articles')); // 📰 Artykuły
 app.use('/api/newsletter', require('./routes/newsletter')); // 📧 Newsletter
 app.use('/api/events', require('./routes/events')); // 📅 Wydarzenia
 app.use('/api/feedback', require('./routes/feedback')); // 💬 Feedback i błędy
+app.use('/api/admin', require('./routes/admin')); // 👑 Admin panel
 
 // 🔒 BEZPIECZEŃSTWO: Bezpieczny health check
 const { secureHealthCheck, detailedHealthCheck } = require('./middleware/healthCheckSecurity');
