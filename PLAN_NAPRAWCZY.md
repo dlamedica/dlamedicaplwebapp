@@ -191,12 +191,23 @@
 
 ## 🎯 PRIORYTETY NA NAJBLIŻSZY TYDZIEŃ
 
-1. ⬜ Skonfiguruj DeepSeek API w n8n
-2. ⬜ Skonfiguruj wysyłkę emaili w n8n
-3. ⬜ Merge PR z feedbackiem
-4. ⬜ Napraw reset hasła (dodaj nodemailer)
-5. ⬜ Przenieś tokeny do httpOnly cookies
+1. ✅ ~~Skonfiguruj DeepSeek API w n8n~~ - DONE
+2. ⬜ Skonfiguruj Telegram Bot dla raportów (Chat ID)
+3. ⬜ Skonfiguruj SMTP w n8n dla password reset
+4. ✅ ~~Napraw reset hasła~~ - DONE (webhook n8n)
+5. ⬜ Przenieś tokeny do httpOnly cookies (większa zmiana)
 
 ---
 
-*Ostatnia aktualizacja: 2026-01-10*
+## ✅ WYKONANE (2026-01-10)
+
+- [x] Reset hasła - webhook n8n + piękny email HTML
+- [x] API Admin stats - `/api/admin/stats`, `/api/admin/users`, `/api/admin/activity`
+- [x] Usunięto pliki backup/problematic (3 pliki, -2528 linii)
+- [x] Workflow password reset w n8n
+- [x] Workflow monthly report → Telegram
+- [x] Feedback system (tabela + API + n8n)
+
+---
+
+*Ostatnia aktualizacja: 2026-01-10 10:00*
