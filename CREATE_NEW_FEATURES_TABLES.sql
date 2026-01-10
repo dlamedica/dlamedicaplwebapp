@@ -154,6 +154,25 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(use
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON push_subscriptions(endpoint);
 
 -- ============================================
+-- 6. USER INTERACTIONS (dla rekomendacji AI)
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_interactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES auth.users(id) ON DELETE SET NULL,
+    session_id VARCHAR(255),
+    content_type VARCHAR(50) NOT NULL, -- 'article', 'event', 'job', 'course', 'product'
+    content_id VARCHAR(50) NOT NULL,
+    action VARCHAR(20) NOT NULL, -- 'view', 'click', 'like', 'save', 'share', 'complete', 'search'
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_interactions_user ON user_interactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_content ON user_interactions(content_type, content_id);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_action ON user_interactions(action);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_created ON user_interactions(created_at DESC);
+
+-- ============================================
 -- GRANT PERMISSIONS (jeśli używasz ról)
 -- ============================================
 -- GRANT ALL ON ALL TABLES IN SCHEMA public TO dlamedica_app;
@@ -169,3 +188,4 @@ COMMENT ON TABLE user_cme_progress IS 'Śledzenie postępu CME użytkowników';
 COMMENT ON TABLE article_translations IS 'Tłumaczenia artykułów na inne języki';
 COMMENT ON TABLE feedback IS 'System zgłaszania błędów i sugestii';
 COMMENT ON TABLE push_subscriptions IS 'Subskrypcje Web Push dla powiadomień server-side';
+COMMENT ON TABLE user_interactions IS 'Śledzenie interakcji użytkowników dla systemu rekomendacji AI';
