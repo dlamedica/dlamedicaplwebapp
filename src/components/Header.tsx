@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronDownIcon,
   UserIcon,
@@ -15,6 +16,7 @@ import { useCart } from '../contexts/CartContext';
 import PremiumFeatureBadge from './PremiumFeatureBadge';
 import NotificationSystem from './NotificationSystem';
 import ToolSuggestionModal from './ToolSuggestionModal';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -26,6 +28,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode, toggleHighContrast, fontSize, toggleFontSize }) => {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isToolsDropdownOpen, setIsToolsDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -38,12 +41,12 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
   const cartItemsCount = getTotalItems();
 
   const navigationLinks = [
-    { name: 'Strona główna', href: '/', mobileShort: 'Główna' },
-    { name: 'Platforma edukacyjna', href: '/edukacja', mobileShort: 'Edukacja' },
-    { name: 'Sklep', href: '/sklep', mobileShort: 'Sklep' },
-    { name: 'Wydarzenia', href: '/wydarzenia', mobileShort: 'Wydarzenia' },
-    { name: 'Oferty pracy', href: '/praca', mobileShort: 'Praca' },
-    { name: 'Uczelnie', href: '/uczelnie', mobileShort: 'Uczelnie' }
+    { name: t('nav.home'), href: '/', mobileShort: t('nav.homeMobile') },
+    { name: t('nav.education'), href: '/edukacja', mobileShort: t('nav.educationMobile') },
+    { name: t('nav.shop'), href: '/sklep', mobileShort: t('nav.shop') },
+    { name: t('nav.events'), href: '/wydarzenia', mobileShort: t('nav.events') },
+    { name: t('nav.jobs'), href: '/praca', mobileShort: t('nav.jobsMobile') },
+    { name: t('nav.universities'), href: '/uczelnie', mobileShort: t('nav.universities') }
   ];
 
   // Sprawdź czy użytkownik to lekarz
@@ -64,14 +67,14 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
     user?.email === 'lekarz@dlamedica.pl';
 
   const toolsMenuItems = [
-    { name: 'ICD-11', href: '/icd-11', isPremium: false },
-    { name: 'Baza Leków', href: '/baza-lekow', isPremium: false },
-    { name: 'Kalkulatory medyczne', href: '/kalkulatory', isPremium: false },
-    { name: 'Kalendarze szczepień', href: '/kalendarze-szczepien', isPremium: false },
+    { name: t('nav.icd11'), href: '/icd-11', isPremium: false },
+    { name: t('nav.drugDatabase'), href: '/baza-lekow', isPremium: false },
+    { name: t('nav.calculators'), href: '/kalkulatory', isPremium: false },
+    { name: t('nav.vaccinationCalendars'), href: '/kalendarze-szczepien', isPremium: false },
     ...(isDoctor ? [
-      { name: 'Mapa staży podyplomowych', href: '/mapa-stazy', isPremium: false },
-      { name: 'Rezydentury', href: '/rezydentury', isPremium: false },
-      { name: 'Mapa rezydentur', href: '/mapa-rezydentur', isPremium: false }
+      { name: t('nav.internshipMap'), href: '/mapa-stazy', isPremium: false },
+      { name: t('nav.residencies'), href: '/rezydentury', isPremium: false },
+      { name: t('nav.residencyMap'), href: '/mapa-rezydentur', isPremium: false }
     ] : [])
   ];
 
@@ -217,7 +220,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black hover:text-[#38b6ff]'
                       }`}
                   >
-                    Narzędzia
+                    {t('nav.tools')}
                     <ChevronDownIcon size={12} className="ml-1" />
                   </button>
 
@@ -286,7 +289,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                           } flex items-center space-x-2`}
                       >
                         <LightbulbIcon size={18} color="#eab308" />
-                        <span>Zaproponuj pomysł</span>
+                        <span>{t('nav.suggestIdea')}</span>
                       </button>
                     </div>
                   )}
@@ -329,6 +332,9 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                     </svg>
                   )}
                 </button>
+
+                {/* Language Switcher */}
+                <LanguageSwitcher darkMode={darkMode} variant="compact" />
 
                 {/* Notification System - only show when authenticated */}
                 {isAuthenticated && (
@@ -413,7 +419,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                               }`}
                           >
                             <UserIcon size={16} className="inline mr-2" />
-                            Profil
+                            {t('auth.profile')}
                           </button>
                           <button
                             onClick={handleSignOut}
@@ -421,7 +427,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                               }`}
                           >
                             <LogoutIcon size={16} className="inline mr-2" />
-                            Wyloguj się
+                            {t('auth.logout')}
                           </button>
                         </div>
                       </div>
@@ -436,7 +442,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black border border-black hover:bg-black hover:text-white'
                         }`}
                     >
-                      Zaloguj się
+                      {t('auth.login')}
                     </button>
                     <button
                       onClick={() => handleNavigation('/register')}
@@ -445,7 +451,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'bg-[#38b6ff] text-black hover:bg-[#2a9fe5]'
                         }`}
                     >
-                      Zarejestruj się
+                      {t('auth.register')}
                     </button>
                   </div>
                 )}
@@ -553,7 +559,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                       : 'text-black hover:text-[#38b6ff]'
                       }`}
                   >
-                    <span>Narzędzia</span>
+                    <span>{t('nav.tools')}</span>
                     <ChevronDownIcon size={12} />
                   </button>
 
@@ -590,7 +596,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                           }`}
                       >
                         <LightbulbIcon size={16} color="#eab308" />
-                        <span>Zaproponuj pomysł</span>
+                        <span>{t('nav.suggestIdea')}</span>
                       </button>
                     </div>
                   )}
@@ -671,7 +677,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black border border-black hover:bg-black hover:text-white'
                         }`}
                     >
-                      Profil
+                      {t('auth.profile')}
                     </button>
                     <button
                       onClick={handleSignOut}
@@ -681,7 +687,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         }`}
                     >
                       <LogoutIcon size={16} className="inline mr-2" />
-                      Wyloguj się
+                      {t('auth.logout')}
                     </button>
                   </div>
                 ) : (
@@ -693,7 +699,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black border border-black hover:bg-black hover:text-white'
                         }`}
                     >
-                      Zaloguj się
+                      {t('auth.login')}
                     </button>
                     <button
                       onClick={() => handleNavigation('/register')}
@@ -702,7 +708,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'bg-[#38b6ff] text-black hover:bg-[#2a9fe5]'
                         }`}
                     >
-                      Zarejestruj się
+                      {t('auth.register')}
                     </button>
                   </>
                 )}
@@ -730,14 +736,14 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                       </svg>
-                      <span>Tryb jasny</span>
+                      <span>{t('header.lightMode')}</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                       </svg>
-                      <span>Tryb ciemny</span>
+                      <span>{t('header.darkMode')}</span>
                     </>
                   )}
                 </button>

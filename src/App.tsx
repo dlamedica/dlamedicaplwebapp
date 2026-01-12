@@ -4,6 +4,9 @@ import { StudyFieldProvider } from './contexts/StudyFieldContext';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import { GameProvider } from './contexts/GameContext';
+
+// i18n initialization - must be imported before any component that uses translations
+import './i18n';
 import { ArticleLifecycleService } from './services/articleLifecycleService';
 import { globalDataService } from './services/globalDataService';
 import Header from './components/Header';
