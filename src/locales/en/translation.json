@@ -98,7 +98,14 @@
     "emailPlaceholder": "Your email address",
     "subscribe": "Subscribe",
     "socialMedia": "Social Media",
-    "followUs": "Follow us"
+    "followUs": "Follow us",
+    "description": "Connecting the world of medicine, education, and modern technology. A portal for medical professionals - tools, calculators, job offers, and medical knowledge in one place.",
+    "navigation": "Navigation",
+    "information": "Information",
+    "newsletterDescription": "Receive the latest information about medical tools and job offers.",
+    "thankYouSubscription": "Thank you for subscribing!",
+    "unsubscribeAnytime": "You can unsubscribe from the newsletter at any time.",
+    "version": "Version"
   },
   "home": {
     "heroTitle": "Educational Platform for Medical Professionals",
@@ -120,7 +127,29 @@
       "upToDateDesc": "Content aligned with the latest guidelines",
       "community": "Community",
       "communityDesc": "Join the medical community"
-    }
+    },
+    "topNews": "Top News",
+    "seeAll": "See all",
+    "moreNews": "More news",
+    "advertisement": "Advertisement",
+    "mostPopularArticles": "Most Popular Articles",
+    "mostPopularDesc": "Most read and recommended by our users",
+    "readMore": "Read more",
+    "recentlyAdded": "Recently Added",
+    "new": "New",
+    "seeCalendar": "See calendar",
+    "webinar": "Webinar",
+    "conference": "Conference",
+    "online": "Online",
+    "latestJobOffers": "Latest Job Offers",
+    "allOffers": "All offers",
+    "apply": "Apply",
+    "popularCalculators": "Popular Calculators",
+    "allCalculators": "All calculators",
+    "badge": "Portal for medical professionals",
+    "yourSource": "Your source of",
+    "medicalKnowledge": "medical knowledge",
+    "bannerSubtitle": "Medical news, education, event calendar and job offers – all in one place"
   },
   "education": {
     "title": "Education Platform",
@@ -331,5 +360,22 @@
     "polish": "Polski",
     "english": "English",
     "ukrainian": "Українська"
+  },
+  "cookies": {
+    "title": "Cookie Information",
+    "closeAriaLabel": "Close cookie banner",
+    "mainText": "This website uses cookies to ensure the best quality of services. By continuing to browse the site, you agree to their use.",
+    "necessaryCookies": "Necessary cookies:",
+    "necessaryCookiesDesc": "Enable basic website functionalities, such as navigation and access to secure areas.",
+    "preferenceCookies": "Preference cookies:",
+    "preferenceCookiesDesc": "Remember your settings (e.g., dark mode, font size).",
+    "analyticsCookies": "Analytics cookies:",
+    "analyticsCookiesDesc": "Help us understand how you use the website to improve it.",
+    "moreInfoText": "More information can be found in our",
+    "privacyPolicy": "Privacy Policy",
+    "showLess": "Show less",
+    "learnMore": "Learn more",
+    "reject": "Reject",
+    "acceptAll": "Accept all"
   }
 }

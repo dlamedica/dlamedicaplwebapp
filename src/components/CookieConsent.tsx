@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaCookie, FaTimes, FaInfoCircle } from 'react-icons/fa';
 
 interface CookieConsentProps {
@@ -8,6 +9,7 @@ interface CookieConsentProps {
 }
 
 const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, fontSize }) => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -88,10 +90,10 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
               <h3 className={`${fontSizes.title} font-bold ${
                 highContrast ? 'text-black' : darkMode ? 'text-white' : 'text-gray-900'
               }`}>
-                Informacja o plikach cookies
+                {t('cookies.title')}
               </h3>
             </div>
-            
+
             <button
               onClick={handleClose}
               className={`p-1 rounded transition-colors duration-200 ${
@@ -101,7 +103,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
                     ? 'text-gray-400 hover:text-white'
                     : 'text-gray-500 hover:text-gray-700'
               }`}
-              aria-label="Zamknij banner cookies"
+              aria-label={t('cookies.closeAriaLabel')}
             >
               <FaTimes className="w-4 h-4" />
             </button>
@@ -112,25 +114,22 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
             highContrast ? 'text-black' : darkMode ? 'text-gray-300' : 'text-gray-600'
           } mb-4`}>
             <p className="mb-3">
-              Ta strona używa plików cookies w celu zapewnienia najlepszej jakości usług. 
-              Kontynuując przeglądanie strony, wyrażasz zgodę na ich użycie.
+              {t('cookies.mainText')}
             </p>
-            
+
             {isExpanded && (
               <div className="space-y-3">
                 <p>
-                  <strong>Niezbędne cookies:</strong> Umożliwiają podstawowe funkcjonalności strony, 
-                  takie jak nawigacja i dostęp do bezpiecznych obszarów.
+                  <strong>{t('cookies.necessaryCookies')}</strong> {t('cookies.necessaryCookiesDesc')}
                 </p>
                 <p>
-                  <strong>Cookies preferencji:</strong> Zapamiętują Twoje ustawienia (np. tryb ciemny, rozmiar czcionki).
+                  <strong>{t('cookies.preferenceCookies')}</strong> {t('cookies.preferenceCookiesDesc')}
                 </p>
                 <p>
-                  <strong>Cookies analityczne:</strong> Pomagają nam zrozumieć, jak korzystasz ze strony, 
-                  aby ją ulepszać.
+                  <strong>{t('cookies.analyticsCookies')}</strong> {t('cookies.analyticsCookiesDesc')}
                 </p>
                 <p>
-                  Więcej informacji znajdziesz w naszej{' '}
+                  {t('cookies.moreInfoText')}{' '}
                   <button
                     onClick={() => {
                       window.history.pushState({}, '', '/polityka-prywatnosci');
@@ -140,7 +139,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
                       highContrast ? 'text-black' : 'text-[#38b6ff] hover:text-[#2a9fe5]'
                     }`}
                   >
-                    Polityce Prywatności
+                    {t('cookies.privacyPolicy')}
                   </button>.
                 </p>
               </div>
@@ -152,15 +151,15 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={`flex items-center ${fontSizes.buttonText} ${
-                highContrast 
-                  ? 'text-black hover:text-gray-600' 
+                highContrast
+                  ? 'text-black hover:text-gray-600'
                   : 'text-[#38b6ff] hover:text-[#2a9fe5]'
               } transition-colors duration-200`}
             >
               <FaInfoCircle className="mr-1" />
-              {isExpanded ? 'Pokaż mniej' : 'Dowiedz się więcej'}
+              {isExpanded ? t('cookies.showLess') : t('cookies.learnMore')}
             </button>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={handleReject}
@@ -172,9 +171,9 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Odrzuć
+                {t('cookies.reject')}
               </button>
-              
+
               <button
                 onClick={handleAccept}
                 className={`px-6 py-2 ${fontSizes.buttonText} font-medium rounded-lg transition-all duration-200 ${
@@ -183,7 +182,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ darkMode, highContrast, f
                     : 'bg-[#38b6ff] text-black hover:bg-[#2a9fe5] shadow-md hover:shadow-lg'
                 }`}
               >
-                Akceptuję wszystkie
+                {t('cookies.acceptAll')}
               </button>
             </div>
           </div>

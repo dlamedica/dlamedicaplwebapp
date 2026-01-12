@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaFacebook, FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { ArrowRightIcon, ChevronDownIcon } from '../icons/CustomIcons';
@@ -10,6 +11,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => {
+  const { t } = useTranslation();
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -42,18 +44,18 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
 
   // Navigation structure
   const navigationLinks = [
-    { name: 'Strona główna', href: '/' },
-    { name: 'Platforma edukacyjna', href: '/edukacja' },
-    { name: 'Sklep', href: '/sklep' },
-    { name: 'Wydarzenia', href: '/wydarzenia' },
-    { name: 'Oferty pracy', href: '/praca' },
-    { name: 'Uczelnie', href: '/uczelnie' }
+    { name: t('nav.home'), href: '/' },
+    { name: t('nav.education'), href: '/edukacja' },
+    { name: t('nav.shop'), href: '/sklep' },
+    { name: t('nav.events'), href: '/wydarzenia' },
+    { name: t('nav.jobs'), href: '/praca' },
+    { name: t('nav.universities'), href: '/uczelnie' }
   ];
 
   const toolsMenuItems = [
-    { name: 'ICD-11', href: '/icd-11' },
-    { name: 'Baza Leków', href: '/baza-lekow' },
-    { name: 'Kalkulatory medyczne', href: '/kalkulatory' }
+    { name: t('nav.icd11'), href: '/icd-11' },
+    { name: t('nav.drugDatabase'), href: '/baza-lekow' },
+    { name: t('nav.calculators'), href: '/kalkulatory' }
   ];
 
   const toggleToolsMenu = () => {
@@ -113,7 +115,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
             </div>
             <p className={`${fontSizes.text} ${highContrast ? 'text-black' : darkMode ? 'text-gray-300' : 'text-gray-600'
               } mb-4`}>
-              Łączymy świat medycyny, edukacji i nowoczesnych technologii. Portal dla medyków - narzędzia, kalkulatory, oferty pracy i wiedza medyczna w jednym miejscu.
+              {t('footer.description')}
             </p>
 
             {/* Social Media */}
@@ -169,7 +171,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
           {/* Navigation Links */}
           <div>
             <h4 className={`${fontSizes.title} font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
-              Nawigacja
+              {t('footer.navigation')}
             </h4>
             <ul className="space-y-2">
               {/* Main navigation links */}
@@ -190,7 +192,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                   onClick={toggleToolsMenu}
                   className={`${fontSizes.text} ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors duration-200 flex items-center w-full`}
                 >
-                  Narzędzia
+                  {t('nav.tools')}
                   <ChevronDownIcon size={14} color={darkMode ? '#D1D5DB' : '#6B7280'} className={`ml-2 transition-transform duration-200 ${isToolsExpanded ? 'rotate-180' : ''
                     }`} />
                 </button>
@@ -217,7 +219,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
           {/* Legal Links */}
           <div>
             <h4 className={`${fontSizes.title} font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
-              Informacje
+              {t('footer.information')}
             </h4>
             <ul className="space-y-2">
               <li>
@@ -225,7 +227,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                   onClick={() => handleNavigation('/kontakt')}
                   className={`${fontSizes.text} ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors duration-200`}
                 >
-                  Kontakt
+                  {t('footer.contact')}
                 </button>
               </li>
               <li>
@@ -233,7 +235,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                   onClick={() => handleNavigation('/regulamin')}
                   className={`${fontSizes.text} ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors duration-200`}
                 >
-                  Regulamin
+                  {t('footer.terms')}
                 </button>
               </li>
               <li>
@@ -241,7 +243,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                   onClick={() => handleNavigation('/polityka-prywatnosci')}
                   className={`${fontSizes.text} ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors duration-200`}
                 >
-                  Polityka prywatności
+                  {t('footer.privacy')}
                 </button>
               </li>
               <li>
@@ -249,7 +251,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                   onClick={() => handleNavigation('/faq')}
                   className={`${fontSizes.text} ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors duration-200`}
                 >
-                  FAQ
+                  {t('footer.faq')}
                 </button>
               </li>
             </ul>
@@ -258,10 +260,10 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
           {/* Newsletter */}
           <div>
             <h4 className={`${fontSizes.title} font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>
-              Zapisz się do newslettera
+              {t('footer.subscribeNewsletter')}
             </h4>
             <p className={`${fontSizes.text} ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-              Otrzymuj najnowsze informacje o narzędziach medycznych i ofertach pracy.
+              {t('footer.newsletterDescription')}
             </p>
 
             {/* Success Message */}
@@ -270,7 +272,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                 <div className="flex items-center">
                   <div className="text-green-600 mr-2">✓</div>
                   <p className="text-green-800 text-sm font-medium">
-                    Dziękujemy za subskrypcję!
+                    {t('footer.thankYouSubscription')}
                   </p>
                 </div>
               </div>
@@ -282,7 +284,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                   type="email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Twój adres email"
+                  placeholder={t('footer.emailPlaceholder')}
                   required
                   className={`flex-1 px-4 py-2 rounded-l-lg border-r-0 border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#38b6ff] ${darkMode
                       ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
@@ -305,7 +307,7 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
                 </button>
               </div>
               <p className={`${fontSizes.smallText} ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Możesz zrezygnować z newslettera w każdym czasie.
+                {t('footer.unsubscribeAnytime')}
               </p>
             </form>
           </div>
@@ -314,12 +316,12 @@ const Footer: React.FC<FooterProps> = ({ darkMode, highContrast, fontSize }) => 
         {/* Bottom Section */}
         <div className={`mt-12 pt-8 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col md:flex-row justify-between items-center`}>
           <p className={`${fontSizes.text} ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4 md:mb-0`}>
-            © 2025 DlaMedica.pl. Wszelkie prawa zastrzeżone.
+            © 2025 DlaMedica.pl. {t('footer.copyright')}
           </p>
 
           <div className="flex items-center">
             <p className={`${fontSizes.smallText} ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Wersja 1.0.0
+              {t('footer.version')} 1.0.0
             </p>
           </div>
         </div>

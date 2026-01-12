@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface BannerProps {
   darkMode: boolean;
@@ -6,6 +7,7 @@ interface BannerProps {
 }
 
 const Banner: React.FC<BannerProps> = ({ darkMode, fontSize }) => {
+  const { t } = useTranslation();
   const getFontSizeClasses = () => {
     switch (fontSize) {
       case 'small':
@@ -55,21 +57,21 @@ const Banner: React.FC<BannerProps> = ({ darkMode, fontSize }) => {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#38b6ff]"></span>
             </span>
             <span className={`text-sm font-medium ${darkMode ? 'text-[#38b6ff]' : 'text-[#0284c7]'}`}>
-              Portal dla profesjonalistów medycznych
+              {t('home.badge')}
             </span>
           </div>
 
           {/* Główny nagłówek */}
           <h1 className={`font-extrabold mb-3 tracking-tight ${fontSizes.title} ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Twoje źródło{' '}
+            {t('home.yourSource')}{' '}
             <span className="bg-gradient-to-r from-[#38b6ff] via-[#0ea5e9] to-[#0284c7] bg-clip-text text-transparent">
-              wiedzy medycznej
+              {t('home.medicalKnowledge')}
             </span>
           </h1>
 
           {/* Podtytuł - w jednej linii */}
           <p className={`${fontSizes.subtitle} ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto mb-6`}>
-            Aktualności medyczne, edukacja, kalendarz wydarzeń i oferty pracy – wszystko w jednym miejscu
+            {t('home.bannerSubtitle')}
           </p>
 
           {/* Szybkie linki usunięte na prośbę – hero zostaje czysty */}

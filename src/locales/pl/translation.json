@@ -98,7 +98,14 @@
     "emailPlaceholder": "Twój adres email",
     "subscribe": "Zapisz się",
     "socialMedia": "Media społecznościowe",
-    "followUs": "Obserwuj nas"
+    "followUs": "Obserwuj nas",
+    "description": "Łączymy świat medycyny, edukacji i nowoczesnych technologii. Portal dla medyków - narzędzia, kalkulatory, oferty pracy i wiedza medyczna w jednym miejscu.",
+    "navigation": "Nawigacja",
+    "information": "Informacje",
+    "newsletterDescription": "Otrzymuj najnowsze informacje o narzędziach medycznych i ofertach pracy.",
+    "thankYouSubscription": "Dziękujemy za subskrypcję!",
+    "unsubscribeAnytime": "Możesz zrezygnować z newslettera w każdym czasie.",
+    "version": "Wersja"
   },
   "home": {
     "heroTitle": "Platforma edukacyjna dla medyków",
@@ -120,7 +127,29 @@
       "upToDateDesc": "Treści zgodne z najnowszymi wytycznymi",
       "community": "Społeczność",
       "communityDesc": "Dołącz do społeczności medyków"
-    }
+    },
+    "topNews": "Najważniejsze teraz",
+    "seeAll": "Zobacz wszystkie",
+    "moreNews": "Więcej aktualności",
+    "advertisement": "Reklama",
+    "mostPopularArticles": "Najpopularniejsze artykuły",
+    "mostPopularDesc": "Najczęściej czytane i polecane przez naszych użytkowników",
+    "readMore": "Czytaj więcej",
+    "recentlyAdded": "Ostatnio dodane",
+    "new": "Nowe",
+    "seeCalendar": "Zobacz kalendarz",
+    "webinar": "Webinar",
+    "conference": "Konferencja",
+    "online": "Online",
+    "latestJobOffers": "Najnowsze oferty pracy",
+    "allOffers": "Wszystkie oferty",
+    "apply": "Aplikuj",
+    "popularCalculators": "Popularne kalkulatory",
+    "allCalculators": "Wszystkie kalkulatory",
+    "badge": "Portal dla profesjonalistów medycznych",
+    "yourSource": "Twoje źródło",
+    "medicalKnowledge": "wiedzy medycznej",
+    "bannerSubtitle": "Aktualności medyczne, edukacja, kalendarz wydarzeń i oferty pracy – wszystko w jednym miejscu"
   },
   "education": {
     "title": "Platforma Edukacyjna",
@@ -331,5 +360,22 @@
     "polish": "Polski",
     "english": "English",
     "ukrainian": "Українська"
+  },
+  "cookies": {
+    "title": "Informacja o plikach cookies",
+    "closeAriaLabel": "Zamknij banner cookies",
+    "mainText": "Ta strona używa plików cookies w celu zapewnienia najlepszej jakości usług. Kontynuując przeglądanie strony, wyrażasz zgodę na ich użycie.",
+    "necessaryCookies": "Niezbędne cookies:",
+    "necessaryCookiesDesc": "Umożliwiają podstawowe funkcjonalności strony, takie jak nawigacja i dostęp do bezpiecznych obszarów.",
+    "preferenceCookies": "Cookies preferencji:",
+    "preferenceCookiesDesc": "Zapamiętują Twoje ustawienia (np. tryb ciemny, rozmiar czcionki).",
+    "analyticsCookies": "Cookies analityczne:",
+    "analyticsCookiesDesc": "Pomagają nam zrozumieć, jak korzystasz ze strony, aby ją ulepszać.",
+    "moreInfoText": "Więcej informacji znajdziesz w naszej",
+    "privacyPolicy": "Polityce Prywatności",
+    "showLess": "Pokaż mniej",
+    "learnMore": "Dowiedz się więcej",
+    "reject": "Odrzuć",
+    "acceptAll": "Akceptuję wszystkie"
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PopularArticlesService } from '../../services/popularArticlesService';
 import { getJobOffers } from '../../services/mockJobService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -84,8 +85,18 @@ const sampleArticles = [
 ];
 
 const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
+  const { t, i18n } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const { country, isForeign, isLoading: locationLoading } = useUserLocation();
+
+  // Helper function for date localization
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'uk': return 'uk-UA';
+      case 'en': return 'en-GB';
+      default: return 'pl-PL';
+    }
+  };
   const [latestJobOffers, setLatestJobOffers] = useState<any[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [featuredProducts, setFeaturedProducts] = useState<WooCommerceProduct[]>([]);
@@ -270,7 +281,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
             <div className="flex items-center gap-3">
               <div className={`w-1 h-8 rounded-full ${darkMode ? 'bg-[#38b6ff]' : 'bg-[#38b6ff]'}`}></div>
               <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Najważniejsze teraz
+                {t('home.topNews')}
               </h2>
             </div>
             <a
@@ -278,7 +289,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
               className={`text-sm font-medium flex items-center gap-1 transition-colors ${darkMode ? 'text-[#38b6ff] hover:text-white' : 'text-[#0284c7] hover:text-gray-900'
                 }`}
             >
-              Zobacz wszystkie
+              {t('home.seeAll')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M9 5l7 7-7 7" />
               </svg>
@@ -318,7 +329,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   <div className="flex items-center gap-4 text-xs text-gray-300">
                     <span>{topArticle.author}</span>
                     <span>•</span>
-                    <span>{new Date(topArticle.publishedAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' })}</span>
+                    <span>{new Date(topArticle.publishedAt).toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'long' })}</span>
                     <span>•</span>
                     <span>{topArticle.readTime}</span>
                   </div>
@@ -358,7 +369,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                     </h4>
                     <div className={`flex items-center gap-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'
                       }`}>
-                      <span>{new Date(article.publishedAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}</span>
+                      <span>{new Date(article.publishedAt).toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' })}</span>
                       <span>•</span>
                       <span>{article.readTime}</span>
                     </div>
@@ -377,7 +388,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
-                Więcej aktualności
+                {t('home.moreNews')}
               </a>
             </div>
           </div>
@@ -391,7 +402,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
             ? 'border-gray-800 bg-gray-900/50 text-gray-600'
             : 'border-gray-200 bg-white text-gray-400'
             }`}>
-            <span className="text-xs">Reklama</span>
+            <span className="text-xs">{t('home.advertisement')}</span>
           </div>
         </div>
       </div>
@@ -409,11 +420,11 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 </svg>
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Najpopularniejsze artykuły
+                  {t('home.mostPopularArticles')}
                 </h2>
               </div>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Najczęściej czytane i polecane przez naszych użytkowników
+                {t('home.mostPopularDesc')}
               </p>
             </div>
           </div>
@@ -467,10 +478,10 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{article.author}</span>
                         <span>•</span>
-                        <span>{new Date(article.publishedAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}</span>
+                        <span>{new Date(article.publishedAt).toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' })}</span>
                       </div>
                       <span className={`font-medium ${darkMode ? 'text-[#38b6ff]' : 'text-[#0284c7]'}`}>
-                        Czytaj więcej →
+                        {t('home.readMore')} →
                       </span>
                     </div>
                   </div>
@@ -493,7 +504,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Ostatnio dodane
+                {t('home.recentlyAdded')}
               </h2>
             </div>
             <div className="flex items-center gap-2">
@@ -546,7 +557,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   />
                   <div className="absolute top-3 left-3">
                     <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500 text-white">
-                      Nowe
+                      {t('home.new')}
                     </span>
                   </div>
                 </div>
@@ -558,7 +569,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                     {article.title}
                   </h4>
                   <div className={`flex items-center gap-2 mt-2 text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    <span>{new Date(article.publishedAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span>{new Date(article.publishedAt).toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                   </div>
                 </div>
               </article>
@@ -586,7 +597,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   <path d="M16 2v4M8 2v4M3 10h18" />
                 </svg>
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Nadchodzące wydarzenia
+                  {t('home.upcomingEvents')}
                 </h2>
               </div>
               <a
@@ -594,7 +605,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                 className={`text-sm font-medium flex items-center gap-1 transition-colors ${darkMode ? 'text-purple-400 hover:text-white' : 'text-purple-600 hover:text-gray-900'
                   }`}
               >
-                Zobacz kalendarz
+                {t('home.seeCalendar')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M9 5l7 7-7 7" />
                 </svg>
@@ -616,7 +627,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                     <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex flex-col items-center justify-center ${darkMode ? 'bg-purple-900/50' : 'bg-purple-100'
                       }`}>
                       <span className={`text-xs font-medium ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
-                        {new Date(event.start_date || event.date).toLocaleDateString('pl-PL', { month: 'short' }).toUpperCase()}
+                        {new Date(event.start_date || event.date).toLocaleDateString(getDateLocale(), { month: 'short' }).toUpperCase()}
                       </span>
                       <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                         {new Date(event.start_date || event.date).getDate()}
@@ -637,7 +648,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                             <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
                         )}
-                        {event.event_type === 'webinar' ? 'Webinar' : 'Konferencja'}
+                        {event.event_type === 'webinar' ? t('home.webinar') : t('home.conference')}
                       </span>
                     </div>
                   </div>
@@ -652,7 +663,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       </svg>
-                      {event.is_online ? 'Online' : event.location}
+                      {event.is_online ? t('home.online') : event.location}
                     </p>
                   )}
                 </article>
@@ -675,7 +686,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
                 </svg>
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Najnowsze oferty pracy
+                  {t('home.latestJobOffers')}
                 </h2>
               </div>
               <a
@@ -685,7 +696,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   : 'bg-[#38b6ff] text-white hover:bg-[#2da7ef]'
                   }`}
               >
-                Wszystkie oferty
+                {t('home.allOffers')}
               </a>
             </div>
 
@@ -734,10 +745,10 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   <div className={`mt-4 pt-3 border-t flex items-center justify-between ${darkMode ? 'border-gray-700' : 'border-gray-100'
                     }`}>
                     <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {new Date(offer.postedDate).toLocaleDateString('pl-PL')}
+                      {new Date(offer.postedDate).toLocaleDateString(getDateLocale())}
                     </span>
                     <span className={`text-sm font-medium ${darkMode ? 'text-[#38b6ff]' : 'text-[#0284c7]'}`}>
-                      Aplikuj →
+                      {t('home.apply')} →
                     </span>
                   </div>
                 </article>
@@ -760,7 +771,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                   <path d="M8 6h8M8 10h8M8 14h4" />
                 </svg>
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Popularne kalkulatory
+                  {t('home.popularCalculators')}
                 </h2>
               </div>
               <a
@@ -768,7 +779,7 @@ const Home: React.FC<HomeProps> = ({ darkMode, highContrast, fontSize }) => {
                 className={`text-sm font-medium flex items-center gap-1 transition-colors ${darkMode ? 'text-cyan-400 hover:text-white' : 'text-cyan-600 hover:text-gray-900'
                   }`}
               >
-                Wszystkie kalkulatory
+                {t('home.allCalculators')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M9 5l7 7-7 7" />
                 </svg>
