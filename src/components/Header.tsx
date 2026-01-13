@@ -12,6 +12,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { useUser } from '../hooks/useUser';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { LanguageSwitcher, useTranslation } from '../plugins/translation';
 import PremiumFeatureBadge from './PremiumFeatureBadge';
 import NotificationSystem from './NotificationSystem';
 import ToolSuggestionModal from './ToolSuggestionModal';
@@ -34,16 +35,17 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
   const { user, profile, isAuthenticated } = useUser();
   const { signOut } = useAuth();
   const { getTotalItems } = useCart();
+  const { t } = useTranslation();
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const cartItemsCount = getTotalItems();
 
   const navigationLinks = [
-    { name: 'Strona główna', href: '/', mobileShort: 'Główna' },
-    { name: 'Platforma edukacyjna', href: '/edukacja', mobileShort: 'Edukacja' },
-    { name: 'Sklep', href: '/sklep', mobileShort: 'Sklep' },
-    { name: 'Wydarzenia', href: '/wydarzenia', mobileShort: 'Wydarzenia' },
-    { name: 'Oferty pracy', href: '/praca', mobileShort: 'Praca' },
-    { name: 'Uczelnie', href: '/uczelnie', mobileShort: 'Uczelnie' }
+    { name: t('nav.home'), href: '/', mobileShort: t('nav.home') },
+    { name: t('nav.education'), href: '/edukacja', mobileShort: t('nav.education') },
+    { name: t('nav.shop'), href: '/sklep', mobileShort: t('nav.shop') },
+    { name: t('nav.events'), href: '/wydarzenia', mobileShort: t('nav.events') },
+    { name: t('nav.jobs'), href: '/praca', mobileShort: t('nav.jobs') },
+    { name: t('nav.universities'), href: '/uczelnie', mobileShort: t('nav.universities') }
   ];
 
   // Sprawdź czy użytkownik to lekarz
@@ -64,14 +66,14 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
     user?.email === 'lekarz@dlamedica.pl';
 
   const toolsMenuItems = [
-    { name: 'ICD-11', href: '/icd-11', isPremium: false },
-    { name: 'Baza Leków', href: '/baza-lekow', isPremium: false },
-    { name: 'Kalkulatory medyczne', href: '/kalkulatory', isPremium: false },
-    { name: 'Kalendarze szczepień', href: '/kalendarze-szczepien', isPremium: false },
+    { name: t('tools.icd11'), href: '/icd-11', isPremium: false },
+    { name: t('tools.drugDatabase'), href: '/baza-lekow', isPremium: false },
+    { name: t('tools.medicalCalculators'), href: '/kalkulatory', isPremium: false },
+    { name: t('tools.vaccinationCalendars'), href: '/kalendarze-szczepien', isPremium: false },
     ...(isDoctor ? [
-      { name: 'Mapa staży podyplomowych', href: '/mapa-stazy', isPremium: false },
-      { name: 'Rezydentury', href: '/rezydentury', isPremium: false },
-      { name: 'Mapa rezydentur', href: '/mapa-rezydentur', isPremium: false }
+      { name: t('tools.internshipMap'), href: '/mapa-stazy', isPremium: false },
+      { name: t('tools.residencies'), href: '/rezydentury', isPremium: false },
+      { name: t('tools.residencyMap'), href: '/mapa-rezydentur', isPremium: false }
     ] : [])
   ];
 
@@ -217,7 +219,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black hover:text-[#38b6ff]'
                       }`}
                   >
-                    Narzędzia
+                    {t('nav.tools')}
                     <ChevronDownIcon size={12} className="ml-1" />
                   </button>
 
@@ -286,7 +288,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                           } flex items-center space-x-2`}
                       >
                         <LightbulbIcon size={18} color="#eab308" />
-                        <span>Zaproponuj pomysł</span>
+                        <span>{t('nav.suggestIdea')}</span>
                       </button>
                     </div>
                   )}
@@ -296,6 +298,13 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
 
               {/* Controls */}
               <div className="flex items-center space-x-2">
+                {/* Language Switcher */}
+                <LanguageSwitcher
+                  variant="compact"
+                  darkMode={darkMode}
+                  size="small"
+                />
+
                 {/* Font Size Toggle */}
                 <button
                   onClick={toggleFontSize}
@@ -366,8 +375,8 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                     ? 'bg-gradient-to-r from-[#38b6ff] to-[#2da7ef] text-black'
                     : 'bg-gradient-to-r from-[#38b6ff] to-[#2da7ef] text-black'
                     }`}
-                  aria-label="Koszyk"
-                  title="Koszyk"
+                  aria-label={t('nav.cart')}
+                  title={t('nav.cart')}
                 >
                   <CartIcon size={22} color="#0f172a" className="drop-shadow-sm" />
                   {cartItemsCount > 0 && (
@@ -391,7 +400,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                       {profile?.avatar_url ? (
                         <img
                           src={profile.avatar_url}
-                          alt="Profil"
+                          alt="{t('nav.profile')}"
                           className="w-6 h-6 rounded-full object-cover"
                         />
                       ) : (
@@ -413,7 +422,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                               }`}
                           >
                             <UserIcon size={16} className="inline mr-2" />
-                            Profil
+                            {t('nav.profile')}
                           </button>
                           <button
                             onClick={handleSignOut}
@@ -421,7 +430,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                               }`}
                           >
                             <LogoutIcon size={16} className="inline mr-2" />
-                            Wyloguj się
+                            {t('nav.logout')}
                           </button>
                         </div>
                       </div>
@@ -436,7 +445,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black border border-black hover:bg-black hover:text-white'
                         }`}
                     >
-                      Zaloguj się
+                      {t('nav.login')}
                     </button>
                     <button
                       onClick={() => handleNavigation('/register')}
@@ -445,7 +454,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'bg-[#38b6ff] text-black hover:bg-[#2a9fe5]'
                         }`}
                     >
-                      Zarejestruj się
+                      {t('nav.register')}
                     </button>
                   </div>
                 )}
@@ -553,7 +562,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                       : 'text-black hover:text-[#38b6ff]'
                       }`}
                   >
-                    <span>Narzędzia</span>
+                    <span>{t('nav.tools')}</span>
                     <ChevronDownIcon size={12} />
                   </button>
 
@@ -590,7 +599,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                           }`}
                       >
                         <LightbulbIcon size={16} color="#eab308" />
-                        <span>Zaproponuj pomysł</span>
+                        <span>{t('nav.suggestIdea')}</span>
                       </button>
                     </div>
                   )}
@@ -656,7 +665,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                       {profile?.avatar_url ? (
                         <img
                           src={profile.avatar_url}
-                          alt="Profil"
+                          alt="{t('nav.profile')}"
                           className="w-4 h-4 rounded-full object-cover inline mr-2"
                         />
                       ) : (
@@ -671,7 +680,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black border border-black hover:bg-black hover:text-white'
                         }`}
                     >
-                      Profil
+                      {t('nav.profile')}
                     </button>
                     <button
                       onClick={handleSignOut}
@@ -681,7 +690,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         }`}
                     >
                       <LogoutIcon size={16} className="inline mr-2" />
-                      Wyloguj się
+                      {t('nav.logout')}
                     </button>
                   </div>
                 ) : (
@@ -693,7 +702,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'text-black border border-black hover:bg-black hover:text-white'
                         }`}
                     >
-                      Zaloguj się
+                      {t('nav.login')}
                     </button>
                     <button
                       onClick={() => handleNavigation('/register')}
@@ -702,10 +711,24 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                         : 'bg-[#38b6ff] text-black hover:bg-[#2a9fe5]'
                         }`}
                     >
-                      Zarejestruj się
+                      {t('nav.register')}
                     </button>
                   </>
                 )}
+                {/* Language Switcher - Mobile */}
+                <div className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <div className={`text-xs font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                    {t('common.language')}
+                  </div>
+                  <LanguageSwitcher
+                    variant="buttons"
+                    darkMode={darkMode}
+                    size="small"
+                    showFlag={true}
+                    showName={true}
+                  />
+                </div>
+
                 <button
                   onClick={toggleFontSize}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 ${darkMode
@@ -730,14 +753,14 @@ const Header: React.FC<HeaderProps> = ({ darkMode, highContrast, toggleDarkMode,
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                       </svg>
-                      <span>Tryb jasny</span>
+                      <span>{t('nav.lightMode')}</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                       </svg>
-                      <span>Tryb ciemny</span>
+                      <span>{t('nav.darkMode')}</span>
                     </>
                   )}
                 </button>

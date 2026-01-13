@@ -4,6 +4,7 @@ import { StudyFieldProvider } from './contexts/StudyFieldContext';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import { GameProvider } from './contexts/GameContext';
+import { LanguageProvider } from './plugins/translation';
 import { ArticleLifecycleService } from './services/articleLifecycleService';
 import { globalDataService } from './services/globalDataService';
 import Header from './components/Header';
@@ -714,47 +715,49 @@ const App: React.FC = () => {
   };
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <GameProvider>
-            <StudyFieldProvider>
-              <div className={`min-h-screen ${highContrast
-                ? 'bg-white text-black'
-                : darkMode
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black'
-                }`}>
-                <Header
-                  darkMode={darkMode}
-                  highContrast={highContrast}
-                  toggleDarkMode={toggleDarkMode}
-                  toggleHighContrast={toggleHighContrast}
-                  fontSize={fontSize}
-                  toggleFontSize={toggleFontSize}
-                />
+    <LanguageProvider>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <GameProvider>
+              <StudyFieldProvider>
+                <div className={`min-h-screen ${highContrast
+                  ? 'bg-white text-black'
+                  : darkMode
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black'
+                  }`}>
+                  <Header
+                    darkMode={darkMode}
+                    highContrast={highContrast}
+                    toggleDarkMode={toggleDarkMode}
+                    toggleHighContrast={toggleHighContrast}
+                    fontSize={fontSize}
+                    toggleFontSize={toggleFontSize}
+                  />
 
-                <main>
-                  {renderPage()}
-                </main>
+                  <main>
+                    {renderPage()}
+                  </main>
 
-                <Footer
-                  darkMode={darkMode}
-                  highContrast={highContrast}
-                  fontSize={fontSize}
-                />
+                  <Footer
+                    darkMode={darkMode}
+                    highContrast={highContrast}
+                    fontSize={fontSize}
+                  />
 
-                {/* Global Components */}
-                <ScrollToTop darkMode={darkMode} highContrast={highContrast} />
-                <CookieConsent darkMode={darkMode} highContrast={highContrast} fontSize={fontSize} />
-                <BugReportButton darkMode={darkMode} />
-                <NotificationPermissionPrompt darkMode={darkMode} />
-              </div>
-            </StudyFieldProvider>
-          </GameProvider>
-        </WishlistProvider>
-      </CartProvider>
-    </AuthProvider>
+                  {/* Global Components */}
+                  <ScrollToTop darkMode={darkMode} highContrast={highContrast} />
+                  <CookieConsent darkMode={darkMode} highContrast={highContrast} fontSize={fontSize} />
+                  <BugReportButton darkMode={darkMode} />
+                  <NotificationPermissionPrompt darkMode={darkMode} />
+                </div>
+              </StudyFieldProvider>
+            </GameProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 };
 
