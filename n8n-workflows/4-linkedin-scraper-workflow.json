@@ -1,0 +1,215 @@
+{
+  "name": "DlaMedica - LinkedIn HR Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "weekly-trigger",
+      "name": "Co tydzień",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Zapytania do LinkedIn Sales Navigator lub zwykłego wyszukiwania\n// UWAGA: Wymaga API LinkedIn lub narzędzia jak Phantombuster\n\nconst searchQueries = [\n  {\n    title: 'HR Manager szpital',\n    keywords: 'HR Manager OR Kierownik HR OR Dyrektor Personalny',\n    industry: 'Hospital & Health Care',\n    location: 'Poland'\n  },\n  {\n    title: 'Rekrutacja medyczna',\n    keywords: 'Specjalista ds. rekrutacji medyczna klinika',\n    industry: 'Medical Practice',\n    location: 'Poland'\n  },\n  {\n    title: 'Dyrektor szpitala',\n    keywords: 'Dyrektor szpital OR CEO klinika',\n    industry: 'Hospital & Health Care',\n    location: 'Poland'\n  },\n  {\n    title: 'HR farmacja',\n    keywords: 'HR Business Partner farmaceutyczna',\n    industry: 'Pharmaceuticals',\n    location: 'Poland'\n  }\n];\n\nreturn searchQueries;"
+      },
+      "id": "generate-linkedin-queries",
+      "name": "Zapytania LinkedIn",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.phantombuster.com/api/v2/agents/launch",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Phantombuster-Key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "YOUR_PHANTOMBUSTER_AGENT_ID"
+            },
+            {
+              "name": "argument",
+              "value": "={{ JSON.stringify({ search: $json.keywords, category: 'People' }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "phantombuster-search",
+      "name": "Phantombuster Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [440, 0],
+      "notes": "Wymaga konta Phantombuster - alternatywnie użyj LinkedIn API"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsowanie wyników z Phantombuster/LinkedIn\nconst results = $input.first().json.data || [];\n\nconst leads = results.map(profile => {\n  // Ekstrakcja danych z profilu LinkedIn\n  const companyName = profile.companyName || profile.company || '';\n  const personName = profile.fullName || profile.name || '';\n  const title = profile.title || profile.headline || '';\n  const linkedinUrl = profile.profileUrl || profile.linkedInProfileUrl || '';\n  \n  // Próba znalezienia emaila firmowego\n  let companyEmail = '';\n  if (profile.email) {\n    companyEmail = profile.email;\n  } else if (companyName) {\n    // Generuj prawdopodobny email firmowy\n    const companyDomain = companyName\n      .toLowerCase()\n      .replace(/\\s+/g, '')\n      .replace(/[^a-z0-9]/g, '');\n    // Typowe wzorce emaili HR\n    companyEmail = `rekrutacja@${companyDomain}.pl`;\n  }\n  \n  return {\n    personName,\n    title,\n    companyName,\n    linkedinUrl,\n    estimatedEmail: companyEmail,\n    source: 'linkedin',\n    foundAt: new Date().toISOString(),\n    status: 'linkedin_lead'\n  };\n}).filter(lead => lead.companyName && lead.personName);\n\nreturn leads;"
+      },
+      "id": "parse-linkedin-results",
+      "name": "Parsuj LinkedIn",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO linkedin_leads (person_name, title, company_name, linkedin_url, estimated_email, source, found_at, status) VALUES ('{{ $json.personName }}', '{{ $json.title }}', '{{ $json.companyName }}', '{{ $json.linkedinUrl }}', '{{ $json.estimatedEmail }}', '{{ $json.source }}', '{{ $json.foundAt }}', '{{ $json.status }}') ON CONFLICT (linkedin_url) DO NOTHING RETURNING *;",
+        "options": {}
+      },
+      "id": "save-linkedin-leads",
+      "name": "Zapisz leady LinkedIn",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [880, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.hunter.io/v2/email-finder",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.companyName.toLowerCase().replace(/\\s+/g, '') + '.pl' }}"
+            },
+            {
+              "name": "first_name",
+              "value": "={{ $json.personName.split(' ')[0] }}"
+            },
+            {
+              "name": "last_name",
+              "value": "={{ $json.personName.split(' ').slice(1).join(' ') }}"
+            },
+            {
+              "name": "api_key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "hunter-email-finder",
+      "name": "Hunter.io Email Finder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [880, 200],
+      "notes": "Opcjonalne - wymaga konta Hunter.io"
+    },
+    {
+      "parameters": {
+        "channel": "#linkedin-leads",
+        "text": "=:briefcase: Nowy lead z LinkedIn!\n\n*Osoba:* {{ $json.personName }}\n*Stanowisko:* {{ $json.title }}\n*Firma:* {{ $json.companyName }}\n*LinkedIn:* {{ $json.linkedinUrl }}\n*Szacowany email:* {{ $json.estimatedEmail }}",
+        "otherOptions": {}
+      },
+      "id": "notify-linkedin-lead",
+      "name": "Powiadom o leadzie",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1100, 0],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "DlaMedica Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Co tydzień": {
+      "main": [
+        [
+          {
+            "node": "Zapytania LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zapytania LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Phantombuster Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phantombuster Search": {
+      "main": [
+        [
+          {
+            "node": "Parsuj LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsuj LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Zapisz leady LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hunter.io Email Finder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zapisz leady LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Powiadom o leadzie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["linkedin", "scraping", "leads"]
+}

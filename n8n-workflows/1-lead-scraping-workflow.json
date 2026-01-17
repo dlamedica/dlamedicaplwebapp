@@ -1,0 +1,207 @@
+{
+  "name": "DlaMedica - Pozyskiwanie leadów medycznych",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Codzienne uruchomienie",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "url": "https://www.google.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.searchQuery }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "google-search",
+      "name": "Google Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [440, 0],
+      "notes": "Wyszukiwanie firm medycznych w Google"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lista zapytań do wyszukiwania firm medycznych\nconst searchQueries = [\n  'szpital rekrutacja kontakt email site:.pl',\n  'klinika medyczna praca dla lekarzy kontakt',\n  'przychodnia lekarska zatrudnimy lekarza email',\n  'centrum medyczne rekrutacja dział HR',\n  'szpital kliniczny oferty pracy kontakt',\n  'prywatna klinika zatrudni lekarza',\n  'gabinet lekarski szuka specjalisty',\n  'laboratorium medyczne praca',\n  'apteka sieciowa rekrutacja farmaceuta',\n  'firma farmaceutyczna praca przedstawiciel medyczny',\n  'dom seniora praca pielęgniarka',\n  'hospicjum zatrudni lekarza',\n  'sanatorium praca lekarz',\n  'centrum rehabilitacji fizjoterapeuta praca',\n  'stomatologia praca dentysta'\n];\n\n// Losowo wybierz zapytania na dziś (max 5 dziennie aby nie być zablokowanym)\nconst shuffled = searchQueries.sort(() => 0.5 - Math.random());\nconst selectedQueries = shuffled.slice(0, 5);\n\nreturn selectedQueries.map(query => ({ searchQuery: query }));"
+      },
+      "id": "generate-queries",
+      "name": "Generuj zapytania",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsowanie wyników wyszukiwania i ekstrakcja danych kontaktowych\nconst html = $input.first().json.data || '';\n\n// Regex patterns dla emaili i telefonów\nconst emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nconst phonePattern = /(?:\\+48)?\\s?\\d{3}[\\s-]?\\d{3}[\\s-]?\\d{3}/g;\nconst websitePattern = /https?:\\/\\/[^\\s\"<>]+\\.pl[^\\s\"<>]*/g;\n\nconst emails = [...new Set(html.match(emailPattern) || [])];\nconst phones = [...new Set(html.match(phonePattern) || [])];\nconst websites = [...new Set(html.match(websitePattern) || [])];\n\n// Filtruj emaile - usuń generyczne\nconst filteredEmails = emails.filter(email => {\n  const genericDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'wp.pl', 'onet.pl', 'interia.pl', 'o2.pl'];\n  const domain = email.split('@')[1];\n  return !genericDomains.includes(domain);\n});\n\nreturn filteredEmails.map(email => ({\n  email: email,\n  phones: phones.slice(0, 3),\n  websites: websites.slice(0, 3),\n  source: 'google_search',\n  foundAt: new Date().toISOString(),\n  status: 'new'\n}));"
+      },
+      "id": "parse-results",
+      "name": "Parsuj wyniki",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (email, phones, websites, source, found_at, status) VALUES ('{{ $json.email }}', '{{ $json.phones }}', '{{ $json.websites }}', '{{ $json.source }}', '{{ $json.foundAt }}', '{{ $json.status }}') ON CONFLICT (email) DO NOTHING RETURNING *;",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Zapisz do bazy",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [880, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-valid",
+      "name": "Filtruj poprawne",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "channel": "#leads-medyczne",
+        "text": "=:hospital: Nowy lead medyczny!\n\n*Email:* {{ $json.email }}\n*Telefony:* {{ $json.phones }}\n*Strony:* {{ $json.websites }}\n*Źródło:* {{ $json.source }}\n*Data:* {{ $json.foundAt }}",
+        "otherOptions": {}
+      },
+      "id": "slack-notification",
+      "name": "Powiadomienie Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1320, 0],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "DlaMedica Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Codzienne uruchomienie": {
+      "main": [
+        [
+          {
+            "node": "Generuj zapytania",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generuj zapytania": {
+      "main": [
+        [
+          {
+            "node": "Google Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search": {
+      "main": [
+        [
+          {
+            "node": "Parsuj wyniki",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsuj wyniki": {
+      "main": [
+        [
+          {
+            "node": "Zapisz do bazy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zapisz do bazy": {
+      "main": [
+        [
+          {
+            "node": "Filtruj poprawne",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtruj poprawne": {
+      "main": [
+        [
+          {
+            "node": "Powiadomienie Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["leads", "scraping", "medyczne"]
+}

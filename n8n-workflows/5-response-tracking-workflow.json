@@ -1,0 +1,326 @@
+{
+  "name": "DlaMedica - Śledzenie odpowiedzi i konwersji",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "email-reply-webhook",
+        "options": {}
+      },
+      "id": "webhook-reply",
+      "name": "Webhook odpowiedzi",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "webhookId": "email-reply-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsowanie odpowiedzi email (z SendGrid/Mailgun webhook)\nconst emailData = $input.first().json;\n\n// Wyciągnij nadawcę (odpowiadający lead)\nconst fromEmail = emailData.from || emailData.sender || emailData.envelope?.from || '';\nconst subject = emailData.subject || '';\nconst body = emailData.text || emailData.body || emailData['stripped-text'] || '';\n\n// Analiza sentymentu prostymi regułami\nlet sentiment = 'neutral';\nconst positiveWords = ['tak', 'zainteresowany', 'chętnie', 'proszę', 'umówmy', 'kontakt', 'oferta'];\nconst negativeWords = ['nie', 'rezygnuję', 'usuń', 'wypisz', 'spam', 'nie interesuje'];\n\nconst bodyLower = body.toLowerCase();\nconst hasPositive = positiveWords.some(word => bodyLower.includes(word));\nconst hasNegative = negativeWords.some(word => bodyLower.includes(word));\n\nif (hasPositive && !hasNegative) sentiment = 'positive';\nelse if (hasNegative) sentiment = 'negative';\n\nreturn [{\n  email: fromEmail,\n  subject,\n  bodyPreview: body.substring(0, 500),\n  sentiment,\n  receivedAt: new Date().toISOString(),\n  isUnsubscribe: bodyLower.includes('wypisz') || bodyLower.includes('usuń') || bodyLower.includes('unsubscribe')\n}];"
+      },
+      "id": "parse-reply",
+      "name": "Parsuj odpowiedź",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "is-unsubscribe",
+              "leftValue": "={{ $json.isUnsubscribe }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-unsubscribe",
+      "name": "Czy wypisanie?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = 'unsubscribed', unsubscribed_at = NOW() WHERE email = '{{ $json.email }}';",
+        "options": {}
+      },
+      "id": "mark-unsubscribed",
+      "name": "Oznacz wypisanego",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [660, -100],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET replied = true, replied_at = NOW(), reply_sentiment = '{{ $json.sentiment }}', status = CASE WHEN '{{ $json.sentiment }}' = 'positive' THEN 'interested' ELSE 'replied' END WHERE email = '{{ $json.email }}';",
+        "options": {}
+      },
+      "id": "mark-replied",
+      "name": "Oznacz odpowiedź",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [660, 100],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "is-positive",
+              "leftValue": "={{ $json.sentiment }}",
+              "rightValue": "positive",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-positive",
+      "name": "Pozytywna odpowiedź?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 100]
+    },
+    {
+      "parameters": {
+        "channel": "#hot-leads",
+        "text": "=:fire: HOT LEAD - Pozytywna odpowiedź!\n\n*Email:* {{ $json.email }}\n*Temat:* {{ $json.subject }}\n*Treść:* {{ $json.bodyPreview }}\n\n:point_right: Skontaktuj się jak najszybciej!",
+        "otherOptions": {}
+      },
+      "id": "notify-hot-lead",
+      "name": "Alert: Hot Lead!",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1100, 0],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "DlaMedica Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toEmail": "sprzedaz@dlamedica.pl",
+        "subject": "=HOT LEAD: Pozytywna odpowiedź od {{ $json.email }}",
+        "emailType": "text",
+        "message": "=Otrzymaliśmy pozytywną odpowiedź!\n\nEmail: {{ $json.email }}\nTemat: {{ $json.subject }}\n\nTreść odpowiedzi:\n{{ $json.bodyPreview }}\n\nSkontaktuj się jak najszybciej!",
+        "options": {}
+      },
+      "id": "email-sales-team",
+      "name": "Email do zespołu",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1100, 200],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "DlaMedica SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-employer-registration",
+        "options": {}
+      },
+      "id": "webhook-registration",
+      "name": "Webhook rejestracji",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [0, 400],
+      "webhookId": "new-employer-registration"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Śledzenie konwersji - nowa rejestracja pracodawcy\nconst registration = $input.first().json;\n\nconst email = registration.email || '';\nconst companyName = registration.companyName || registration.company_name || '';\nconst source = registration.ref || registration.utm_source || 'direct';\n\nreturn [{\n  email,\n  companyName,\n  source,\n  registeredAt: new Date().toISOString(),\n  isConversion: source.includes('email') || source.includes('followup')\n}];"
+      },
+      "id": "parse-registration",
+      "name": "Parsuj rejestrację",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = 'converted', converted_at = NOW(), conversion_source = '{{ $json.source }}' WHERE email = '{{ $json.email }}';",
+        "options": {}
+      },
+      "id": "mark-converted",
+      "name": "Oznacz konwersję",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [440, 400],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#conversions",
+        "text": "=:tada: KONWERSJA! Nowy pracodawca zarejestrowany!\n\n*Firma:* {{ $json.companyName }}\n*Email:* {{ $json.email }}\n*Źródło:* {{ $json.source }}\n\n:chart_with_upwards_trend: Świetna robota zespole!",
+        "otherOptions": {}
+      },
+      "id": "notify-conversion",
+      "name": "Powiadom o konwersji",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [660, 400],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "DlaMedica Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook odpowiedzi": {
+      "main": [
+        [
+          {
+            "node": "Parsuj odpowiedź",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsuj odpowiedź": {
+      "main": [
+        [
+          {
+            "node": "Czy wypisanie?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Czy wypisanie?": {
+      "main": [
+        [
+          {
+            "node": "Oznacz wypisanego",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Oznacz odpowiedź",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Oznacz odpowiedź": {
+      "main": [
+        [
+          {
+            "node": "Pozytywna odpowiedź?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pozytywna odpowiedź?": {
+      "main": [
+        [
+          {
+            "node": "Alert: Hot Lead!",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email do zespołu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook rejestracji": {
+      "main": [
+        [
+          {
+            "node": "Parsuj rejestrację",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsuj rejestrację": {
+      "main": [
+        [
+          {
+            "node": "Oznacz konwersję",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Oznacz konwersję": {
+      "main": [
+        [
+          {
+            "node": "Powiadom o konwersji",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["tracking", "conversion", "responses"]
+}

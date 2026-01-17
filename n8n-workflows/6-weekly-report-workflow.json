@@ -1,0 +1,201 @@
+{
+  "name": "DlaMedica - Raport tygodniowy leadów",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "monday-trigger",
+      "name": "Poniedziałek 9:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  COUNT(*) FILTER (WHERE found_at >= NOW() - INTERVAL '7 days') as new_leads_week,\n  COUNT(*) FILTER (WHERE email_sent = true AND email_sent_at >= NOW() - INTERVAL '7 days') as emails_sent_week,\n  COUNT(*) FILTER (WHERE replied = true AND replied_at >= NOW() - INTERVAL '7 days') as replies_week,\n  COUNT(*) FILTER (WHERE status = 'converted' AND converted_at >= NOW() - INTERVAL '7 days') as conversions_week,\n  COUNT(*) FILTER (WHERE status = 'unsubscribed' AND unsubscribed_at >= NOW() - INTERVAL '7 days') as unsubscribes_week,\n  COUNT(*) as total_leads,\n  COUNT(*) FILTER (WHERE status = 'converted') as total_conversions,\n  ROUND(COUNT(*) FILTER (WHERE replied = true)::numeric / NULLIF(COUNT(*) FILTER (WHERE email_sent = true), 0) * 100, 2) as reply_rate,\n  ROUND(COUNT(*) FILTER (WHERE status = 'converted')::numeric / NULLIF(COUNT(*) FILTER (WHERE email_sent = true), 0) * 100, 2) as conversion_rate\nFROM leads;",
+        "options": {}
+      },
+      "id": "get-stats",
+      "name": "Pobierz statystyki",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [220, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  source,\n  COUNT(*) as leads_count,\n  COUNT(*) FILTER (WHERE status = 'converted') as conversions,\n  ROUND(COUNT(*) FILTER (WHERE status = 'converted')::numeric / NULLIF(COUNT(*), 0) * 100, 2) as conversion_rate\nFROM leads\nWHERE found_at >= NOW() - INTERVAL '7 days'\nGROUP BY source\nORDER BY leads_count DESC;",
+        "options": {}
+      },
+      "id": "get-source-stats",
+      "name": "Statystyki źródeł",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [220, 200],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  email,\n  company_name,\n  reply_sentiment,\n  replied_at\nFROM leads\nWHERE reply_sentiment = 'positive' \n  AND replied_at >= NOW() - INTERVAL '7 days'\nORDER BY replied_at DESC\nLIMIT 10;",
+        "options": {}
+      },
+      "id": "get-hot-leads",
+      "name": "Hot leads tygodnia",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [220, 400],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Zbierz wszystkie dane i wygeneruj raport\nconst stats = $('Pobierz statystyki').first().json;\nconst sourceStats = $('Statystyki źródeł').all();\nconst hotLeads = $('Hot leads tygodnia').all();\n\n// Formatowanie raportu\nlet sourceTable = sourceStats.map(s => \n  `| ${s.json.source} | ${s.json.leads_count} | ${s.json.conversions} | ${s.json.conversion_rate}% |`\n).join('\\n');\n\nlet hotLeadsList = hotLeads.map(l => \n  `- ${l.json.email} (${l.json.company_name || 'Nieznana firma'})`\n).join('\\n');\n\nconst report = {\n  subject: `Raport leadów - Tydzień ${new Date().toISOString().split('T')[0]}`,\n  stats,\n  sourceStats: sourceStats.map(s => s.json),\n  hotLeads: hotLeads.map(l => l.json),\n  reportDate: new Date().toISOString(),\n  sourceTable,\n  hotLeadsList\n};\n\nreturn [report];"
+      },
+      "id": "generate-report",
+      "name": "Generuj raport",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "channel": "#weekly-reports",
+        "text": "=:bar_chart: *Tygodniowy raport leadów DlaMedica*\n\n*Statystyki tego tygodnia:*\n:new: Nowe leady: *{{ $json.stats.new_leads_week }}*\n:email: Wysłane emaile: *{{ $json.stats.emails_sent_week }}*\n:speech_balloon: Odpowiedzi: *{{ $json.stats.replies_week }}*\n:tada: Konwersje: *{{ $json.stats.conversions_week }}*\n:x: Wypisania: *{{ $json.stats.unsubscribes_week }}*\n\n*Wskaźniki:*\n:chart_with_upwards_trend: Reply rate: *{{ $json.stats.reply_rate }}%*\n:trophy: Conversion rate: *{{ $json.stats.conversion_rate }}%*\n\n*Łącznie w bazie:*\n:file_folder: Wszystkie leady: *{{ $json.stats.total_leads }}*\n:white_check_mark: Wszystkie konwersje: *{{ $json.stats.total_conversions }}*\n\n*Top źródła tego tygodnia:*\n| Źródło | Leady | Konwersje | Rate |\n|--------|-------|-----------|------|\n{{ $json.sourceTable }}\n\n*Hot leads do kontaktu:*\n{{ $json.hotLeadsList || 'Brak hot leadów w tym tygodniu' }}",
+        "otherOptions": {}
+      },
+      "id": "send-slack-report",
+      "name": "Wyślij na Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [660, 100],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "DlaMedica Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toEmail": "zespol@dlamedica.pl",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }\n    .header { background: #38b6ff; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }\n    .content { background: #f9f9f9; padding: 20px; }\n    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }\n    .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }\n    .stat-number { font-size: 32px; font-weight: bold; color: #38b6ff; }\n    .stat-label { color: #666; font-size: 14px; }\n    table { width: 100%; border-collapse: collapse; margin: 20px 0; }\n    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }\n    th { background: #38b6ff; color: white; }\n    .highlight { background: #e8f5e9; }\n    h2 { color: #38b6ff; border-bottom: 2px solid #38b6ff; padding-bottom: 10px; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>Tygodniowy Raport Leadów</h1>\n    <p>{{ $json.reportDate.split('T')[0] }}</p>\n  </div>\n  \n  <div class=\"content\">\n    <h2>Statystyki tygodnia</h2>\n    <div class=\"stat-grid\">\n      <div class=\"stat-card\">\n        <div class=\"stat-number\">{{ $json.stats.new_leads_week }}</div>\n        <div class=\"stat-label\">Nowe leady</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-number\">{{ $json.stats.emails_sent_week }}</div>\n        <div class=\"stat-label\">Wysłane emaile</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-number\">{{ $json.stats.replies_week }}</div>\n        <div class=\"stat-label\">Odpowiedzi</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-number\">{{ $json.stats.conversions_week }}</div>\n        <div class=\"stat-label\">Konwersje</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-number\">{{ $json.stats.reply_rate }}%</div>\n        <div class=\"stat-label\">Reply rate</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-number\">{{ $json.stats.conversion_rate }}%</div>\n        <div class=\"stat-label\">Conversion rate</div>\n      </div>\n    </div>\n    \n    <h2>Hot leads do kontaktu</h2>\n    <ul>\n    {{ $json.hotLeadsList || '<li>Brak hot leadów w tym tygodniu</li>' }}\n    </ul>\n    \n    <h2>Podsumowanie</h2>\n    <p><strong>Łącznie w bazie:</strong> {{ $json.stats.total_leads }} leadów</p>\n    <p><strong>Wszystkie konwersje:</strong> {{ $json.stats.total_conversions }}</p>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "send-email-report",
+      "name": "Wyślij email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [660, 300],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "DlaMedica SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Poniedziałek 9:00": {
+      "main": [
+        [
+          {
+            "node": "Pobierz statystyki",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Statystyki źródeł",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hot leads tygodnia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pobierz statystyki": {
+      "main": [
+        [
+          {
+            "node": "Generuj raport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Statystyki źródeł": {
+      "main": [
+        [
+          {
+            "node": "Generuj raport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot leads tygodnia": {
+      "main": [
+        [
+          {
+            "node": "Generuj raport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generuj raport": {
+      "main": [
+        [
+          {
+            "node": "Wyślij na Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wyślij email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["report", "weekly", "analytics"]
+}

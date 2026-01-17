@@ -1,0 +1,218 @@
+{
+  "name": "DlaMedica - Kampania Cold Email",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Co 4 godziny",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM leads WHERE status = 'new' AND email_sent = false ORDER BY found_at ASC LIMIT 10;",
+        "options": {}
+      },
+      "id": "get-new-leads",
+      "name": "Pobierz nowe leady",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [220, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Personalizacja emaila na podstawie danych leada\nconst lead = $input.first().json;\n\n// Wykryj typ placówki na podstawie emaila/strony\nlet placeholderType = 'placówka medyczna';\nconst email = lead.email.toLowerCase();\nconst websites = (lead.websites || '').toLowerCase();\n\nif (email.includes('szpital') || websites.includes('szpital')) {\n  placeholderType = 'szpital';\n} else if (email.includes('klinik') || websites.includes('klinik')) {\n  placeholderType = 'klinika';\n} else if (email.includes('przychod') || websites.includes('przychod')) {\n  placeholderType = 'przychodnia';\n} else if (email.includes('apteka') || websites.includes('apteka')) {\n  placeholderType = 'apteka';\n} else if (email.includes('lab') || websites.includes('laborator')) {\n  placeholderType = 'laboratorium';\n} else if (email.includes('stomatolog') || email.includes('dent')) {\n  placeholderType = 'gabinet stomatologiczny';\n}\n\n// Wygeneruj spersonalizowany temat\nconst subjects = [\n  `Darmowa publikacja ofert pracy dla ${placeholderType}`,\n  `Rekrutacja medyków - bezpłatne ogłoszenia na DlaMedica.pl`,\n  `Szukasz lekarzy/pielęgniarek? Mamy 15 000+ użytkowników`,\n  `Współpraca rekrutacyjna - DlaMedica.pl`\n];\n\nconst subject = subjects[Math.floor(Math.random() * subjects.length)];\n\nreturn [{\n  ...lead,\n  placeholderType,\n  emailSubject: subject\n}];"
+      },
+      "id": "personalize-email",
+      "name": "Personalizuj email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "fromEmail": "kontakt@dlamedica.pl",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailType": "html",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .header { background: linear-gradient(135deg, #38b6ff 0%, #2da7ef 100%); padding: 20px; text-align: center; }\n    .header h1 { color: white; margin: 0; font-size: 24px; }\n    .content { padding: 30px; background: #f9f9f9; }\n    .benefits { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }\n    .benefit-item { padding: 10px 0; border-bottom: 1px solid #eee; }\n    .benefit-item:last-child { border-bottom: none; }\n    .cta-button { display: inline-block; background: #38b6ff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }\n    .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }\n    .stats { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }\n    .stat { padding: 15px; }\n    .stat-number { font-size: 28px; font-weight: bold; color: #38b6ff; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>DlaMedica.pl</h1>\n    <p style=\"color: white; margin: 5px 0;\">Platforma dla profesjonalistów medycznych</p>\n  </div>\n  \n  <div class=\"content\">\n    <p>Dzień dobry,</p>\n    \n    <p>Piszę do Państwa z platformy <strong>DlaMedica.pl</strong> - największego polskiego portalu dla studentów medycyny i młodych lekarzy.</p>\n    \n    <p>Zauważyłem, że Państwa {{ $json.placeholderType }} może poszukiwać wykwalifikowanego personelu medycznego. Chciałbym zaproponować <strong>bezpłatną publikację ofert pracy</strong> na naszej platformie.</p>\n    \n    <div class=\"stats\">\n      <div class=\"stat\">\n        <div class=\"stat-number\">15 000+</div>\n        <div>Aktywnych użytkowników</div>\n      </div>\n      <div class=\"stat\">\n        <div class=\"stat-number\">85%</div>\n        <div>Studenci medycyny i lekarze</div>\n      </div>\n      <div class=\"stat\">\n        <div class=\"stat-number\">100%</div>\n        <div>Darmowe podstawowe ogłoszenia</div>\n      </div>\n    </div>\n    \n    <div class=\"benefits\">\n      <h3 style=\"margin-top: 0;\">Co oferujemy:</h3>\n      <div class=\"benefit-item\">✓ <strong>Darmowa publikacja</strong> podstawowych ofert pracy</div>\n      <div class=\"benefit-item\">✓ <strong>Targetowana grupa</strong> - studenci medycyny, lekarze, pielęgniarki, farmaceuci</div>\n      <div class=\"benefit-item\">✓ <strong>Nowoczesna platforma</strong> z filtrowaniem po specjalizacji i lokalizacji</div>\n      <div class=\"benefit-item\">✓ <strong>Powiadomienia email</strong> dla kandydatów pasujących do profilu</div>\n      <div class=\"benefit-item\">✓ <strong>Panel pracodawcy</strong> do zarządzania aplikacjami</div>\n      <div class=\"benefit-item\">✓ <strong>Statystyki</strong> wyświetleń i aplikacji</div>\n    </div>\n    \n    <p style=\"text-align: center;\">\n      <a href=\"https://dlamedica.pl/register?type=employer&ref=email\" class=\"cta-button\">Zarejestruj się za darmo</a>\n    </p>\n    \n    <p>Czy mogę umówić się na krótką rozmowę telefoniczną, aby omówić szczegóły współpracy?</p>\n    \n    <p>Z poważaniem,<br>\n    <strong>Zespół DlaMedica.pl</strong><br>\n    Tel: +48 XXX XXX XXX<br>\n    Email: kontakt@dlamedica.pl</p>\n  </div>\n  \n  <div class=\"footer\">\n    <p>DlaMedica.pl - Twoja droga do kariery w medycynie</p>\n    <p><a href=\"https://dlamedica.pl/unsubscribe?email={{ $json.email }}\">Wypisz się z listy mailingowej</a></p>\n  </div>\n</body>\n</html>",
+        "options": {
+          "replyTo": "kontakt@dlamedica.pl"
+        }
+      },
+      "id": "send-email",
+      "name": "Wyślij email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [660, 0],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "DlaMedica SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET email_sent = true, email_sent_at = NOW(), status = 'contacted' WHERE email = '{{ $json.email }}';",
+        "options": {}
+      },
+      "id": "update-status",
+      "name": "Aktualizuj status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [880, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "DlaMedica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "split-batch",
+      "name": "Wysyłaj pojedynczo",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [440, 200],
+      "notes": "Wysyłaj emaile pojedynczo z opóźnieniem"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-between",
+      "name": "Czekaj 30s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "channel": "#cold-emails",
+        "text": "=:email: Email wysłany do: {{ $json.email }}\nTyp placówki: {{ $json.placeholderType }}\nTemat: {{ $json.emailSubject }}",
+        "otherOptions": {}
+      },
+      "id": "log-sent",
+      "name": "Log wysłania",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1320, 0],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "DlaMedica Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Co 4 godziny": {
+      "main": [
+        [
+          {
+            "node": "Pobierz nowe leady",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pobierz nowe leady": {
+      "main": [
+        [
+          {
+            "node": "Wysyłaj pojedynczo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wysyłaj pojedynczo": {
+      "main": [
+        [
+          {
+            "node": "Personalizuj email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalizuj email": {
+      "main": [
+        [
+          {
+            "node": "Wyślij email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wyślij email": {
+      "main": [
+        [
+          {
+            "node": "Aktualizuj status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aktualizuj status": {
+      "main": [
+        [
+          {
+            "node": "Czekaj 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Czekaj 30s": {
+      "main": [
+        [
+          {
+            "node": "Log wysłania",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["email", "campaign", "outreach"]
+}
