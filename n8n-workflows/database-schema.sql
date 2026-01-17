@@ -23,7 +23,6 @@ DO $$ BEGIN
         'zdrowie psychiczne',
         'krwiodawstwo',
         'medycyna pracy',
-        'służby mundurowe',
         'instytut medyczny',
         'weterynaria',
         'sieć medyczna',

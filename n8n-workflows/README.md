@@ -39,8 +39,45 @@ n8n-workflows/
 ├── 4-linkedin-scraper-workflow.json    # Scraper LinkedIn
 ├── 5-response-tracking-workflow.json   # Śledzenie odpowiedzi
 ├── 6-weekly-report-workflow.json       # Raporty tygodniowe
+├── 7-leads-newsletter-integration.json # Integracja leadów z newsletterem
 ├── database-schema.sql                 # Schemat bazy danych
 └── README.md                           # Ta dokumentacja
+```
+
+## JAK ZAIMPORTOWAĆ DO n8n
+
+**WAŻNE:** Te pliki to JSON workflows - musisz je ręcznie zaimportować do swojego n8n.
+
+### Krok po kroku:
+
+1. **Zaloguj się do n8n**: https://dlamedica.app.n8n.cloud
+
+2. **Importuj każdy workflow:**
+   - Kliknij przycisk **"+ Add workflow"** lub **"Create Workflow"**
+   - W nowym workflow kliknij **trzy kropki (...)** w prawym górnym rogu
+   - Wybierz **"Import from File"** lub **"Import from URL"**
+   - Wklej zawartość pliku JSON (otwórz plik, kopiuj całość, wklej)
+   - Lub użyj **"Import from URL"** jeśli pliki są dostępne online
+
+3. **Skonfiguruj credentials** (po imporcie):
+   - PostgreSQL - dane dostępowe do bazy
+   - SMTP - do wysyłki emaili
+   - HTTP Header Auth - API key dla newslettera
+
+4. **Aktywuj workflow:**
+   - Przełącz toggle "Active" na ON
+   - Workflow zacznie działać według harmonogramu
+
+### Szybki import przez CLI (jeśli masz n8n CLI):
+```bash
+# Importuj wszystkie workflows
+n8n import:workflow --input=1-lead-scraping-workflow.json
+n8n import:workflow --input=2-cold-email-campaign-workflow.json
+n8n import:workflow --input=3-followup-sequence-workflow.json
+n8n import:workflow --input=4-linkedin-scraper-workflow.json
+n8n import:workflow --input=5-response-tracking-workflow.json
+n8n import:workflow --input=6-weekly-report-workflow.json
+n8n import:workflow --input=7-leads-newsletter-integration.json
 ```
 
 ## Wymagane usługi
@@ -50,7 +87,6 @@ n8n-workflows/
 | **n8n** | Platforma automatyzacji | Self-hosted: Free / Cloud: od $20/mies |
 | **PostgreSQL** | Baza danych leadów | Free (używasz istniejącej) |
 | **SMTP** | Wysyłka emaili | SendGrid/Mailgun: Free tier dostępny |
-| **Slack** | Powiadomienia | Free |
 | **Phantombuster** (opcjonalnie) | LinkedIn scraping | od $59/mies |
 | **Hunter.io** (opcjonalnie) | Weryfikacja emaili | 25 free/mies |
 
@@ -91,10 +127,11 @@ User: apikey
 Password: your_sendgrid_api_key
 ```
 
-#### Slack
+#### HTTP Header Auth (Newsletter API)
 ```
-Name: DlaMedica Slack
-Bot Token: xoxb-your-token
+Name: DlaMedica API Key
+Header Name: X-API-Key
+Header Value: your_api_key
 ```
 
 ## Opis workflow
@@ -176,7 +213,44 @@ Bot Token: xoxb-your-token
 - Reply rate i conversion rate
 - Top źródła leadów
 - Lista hot leadów do kontaktu
-- Wysyłka na Slack i email
+- Wysyłka email (raporty)
+
+### 7. Newsletter Integration (Codziennie 10:00 + Webhook)
+
+**Cel:** Automatyczna synchronizacja leadów z newsletterem
+
+**Funkcje:**
+- Codzienne dodawanie nowych leadów do newslettera
+- Webhook do ręcznego dodawania leadów
+- Segmentacja według typu placówki (szpitale, kliniki, apteki, itp.)
+- Tagowanie leadów dla lepszego targetowania
+- Śledzenie statusu subskrypcji w bazie
+
+**Segmenty newslettera:**
+- `hospitals` - szpitale
+- `clinics` - kliniki
+- `outpatient` - przychodnie
+- `pharmacy` - apteki i farmacja
+- `diagnostics` - laboratoria
+- `dental` - stomatologia
+- `rehabilitation` - rehabilitacja
+- `private_practice` - gabinety prywatne
+- `medical_centers` - centra medyczne
+- `long_term_care` - opieka długoterminowa
+
+**Webhook endpoints:**
+```
+POST /webhook/add-lead-to-newsletter
+Body: {
+  "email": "rekrutacja@szpital.pl",
+  "company_name": "Szpital Miejski",
+  "facility_type": "szpital",
+  "add_to_newsletter": true
+}
+
+GET /webhook/newsletter-leads-stats
+Response: statystyki leadów i subskrypcji
+```
 
 ## Webhook endpoints
 
